@@ -61,8 +61,28 @@ class OwnerDashboardData {
 class OwnerDashboardRepository {
   const OwnerDashboardRepository();
 
-  Future<OwnerDashboardData> load() async {
-    return _demo;
+  Future<OwnerDashboardData> load({String? branchId}) async {
+    // Generate some deterministic variation based on branchId
+    final isFiltered = branchId != null;
+    final factor = isFiltered ? (branchId.hashCode.abs() % 50 + 50) / 100.0 : 1.0;
+    
+    return OwnerDashboardData(
+      date: _demo.date,
+      asOf: _demo.asOf,
+      salesTotal: _demo.salesTotal * factor,
+      salesTrendPct: _demo.salesTrendPct,
+      profitEstimate: _demo.profitEstimate * factor,
+      marginPct: _demo.marginPct,
+      itemsSold: (_demo.itemsSold * factor).round(),
+      salesCount: (_demo.salesCount * factor).round(),
+      gstLiability: _demo.gstLiability * factor,
+      gstPeriod: _demo.gstPeriod,
+      topPerformer: _demo.topPerformer,
+      lowStockCount: isFiltered ? 2 : _demo.lowStockCount,
+      agingStockCount: isFiltered ? 5 : _demo.agingStockCount,
+      unreadNotifications: _demo.unreadNotifications,
+      pendingApprovals: _demo.pendingApprovals,
+    );
   }
 }
 

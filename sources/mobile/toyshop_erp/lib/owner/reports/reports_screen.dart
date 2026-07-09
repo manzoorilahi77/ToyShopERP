@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/core.dart';
+import '../../core/models/branches_data.dart';
 import '../purchase/new_purchase_screen.dart';
 import 'reports_data.dart';
 
@@ -20,6 +21,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   ReportPeriod _period = ReportPeriod.day;
   AgingThreshold _agingThreshold = AgingThreshold.d60;
+  String? _selectedBranchId = 'all';
 
   SalesSummary? _sales;
   List<TopProductStat>? _topProducts;
@@ -53,8 +55,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   void _fetchSales() {
     final period = _period;
-    _repo.salesSummary(period).then((v) {
-      if (mounted && _period == period) setState(() => _sales = v);
+    final branchId = _selectedBranchId;
+    _repo.salesSummary(period, branchId: branchId).then((v) {
+      if (mounted && _period == period && _selectedBranchId == branchId) setState(() => _sales = v);
     });
     _repo.topProducts(period).then((v) {
       if (mounted && _period == period) setState(() => _topProducts = v);
@@ -112,6 +115,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
       _topProducts = null;
       _topStaff = null;
       _categories = null;
+    });
+    _fetchSales();
+  }
+
+  void _onBranchChanged(String? branchId) {
+    if (branchId == _selectedBranchId) return;
+    setState(() {
+      _selectedBranchId = branchId;
+      _sales = null;
     });
     _fetchSales();
   }
@@ -208,17 +220,54 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Widget _salesHeader() {
     final p = context.palette;
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Sales', style: AppType.h2.copyWith(color: p.ink)),
-        const Spacer(),
-        _SegTabs<ReportPeriod>(
-          value: _period,
-          options: ReportPeriod.values,
-          labelOf: (v) => v.label,
-          onChanged: _onPeriodChanged,
+        Row(
+          children: [
+            Text('Sales', style: AppType.h2.copyWith(color: p.ink)),
+            const Spacer(),
+            _SegTabs<ReportPeriod>(
+              value: _period,
+              options: ReportPeriod.values,
+              labelOf: (v) => v.label,
+              onChanged: _onPeriodChanged,
+            ),
+          ],
         ),
+        const SizedBox(height: 12),
+        _branchSelector(),
       ],
+    );
+  }
+
+  Widget _branchSelector() {
+    final p = context.palette;
+    return ListenableBuilder(
+      listenable: branchesData,
+      builder: (context, _) {
+        final branches = branchesData.branches;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: p.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: p.border),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedBranchId,
+              isExpanded: true,
+              icon: Icon(Icons.store_rounded, color: p.primary),
+              items: [
+                const DropdownMenuItem(value: 'all', child: Text('All Branches')),
+                ...branches.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))),
+              ],
+              onChanged: _onBranchChanged,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -229,7 +278,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         crossAxisCount: 2,
         mainAxisSpacing: AppSpacing.md,
         crossAxisSpacing: AppSpacing.md,
-        childAspectRatio: 1.55,
+        childAspectRatio: 1.35,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         children: const [SkeletonBox(radius: 12), SkeletonBox(radius: 12)],
@@ -240,7 +289,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       crossAxisCount: 2,
       mainAxisSpacing: AppSpacing.md,
       crossAxisSpacing: AppSpacing.md,
-      childAspectRatio: 1.55,
+      childAspectRatio: 1.35,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: [

@@ -159,9 +159,21 @@ final DateTime kReportsAsOf = DateTime(2026, 7, 3, 19, 44);
 class ReportsRepository {
   const ReportsRepository();
 
-  Future<SalesSummary> salesSummary(ReportPeriod period) async {
+  Future<SalesSummary> salesSummary(ReportPeriod period, {String? branchId}) async {
     await Future.delayed(const Duration(milliseconds: 250));
-    return _salesByPeriod[period]!;
+    final summary = _salesByPeriod[period]!;
+    if (branchId == null || branchId == 'all') return summary;
+    
+    // Simulate branch-specific data by scaling down totals
+    final factor = 0.3 + (branchId.hashCode % 50) / 100;
+    return SalesSummary(
+      salesTotal: summary.salesTotal * factor,
+      profitEstimate: summary.profitEstimate * factor,
+      itemsSold: (summary.itemsSold * factor).round(),
+      salesCount: (summary.salesCount * factor).round(),
+      trendPct: summary.trendPct, // trend can remain the same
+      series: summary.series.map((s) => SalesPoint(label: s.label, value: s.value * factor)).toList(),
+    );
   }
 
   Future<List<TopProductStat>> topProducts(ReportPeriod period) async {

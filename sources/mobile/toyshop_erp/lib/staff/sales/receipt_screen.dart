@@ -221,6 +221,13 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
               Text('Staff: ${d.staffName}', style: AppType.caption.copyWith(color: p.inkMuted)),
             ],
           ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text('Branch: ${d.branchName}', style: AppType.caption.copyWith(color: p.inkMuted)),
+            ],
+          ),
           const SizedBox(height: 12),
           Divider(color: p.border),
           Padding(
@@ -261,8 +268,6 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
           LabeledRow('Subtotal (taxable)', MoneyText(Fmt.money(d.taxableTotal))),
           LabeledRow('CGST', MoneyText(Fmt.money(d.cgst))),
           LabeledRow('SGST', MoneyText(Fmt.money(d.sgst))),
-          if (d.discountAmount > 0)
-            LabeledRow('Discount', MoneyText('− ${Fmt.money(d.discountAmount)}', color: p.danger)),
           Divider(color: p.ink, thickness: 1.2),
           LabeledRow('TOTAL', MoneyText(Fmt.money(d.total), style: AppType.h2), emphasize: true),
           if (d.hasPriceOverrides) ...[

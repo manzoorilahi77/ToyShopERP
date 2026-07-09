@@ -109,18 +109,16 @@ class NewSaleRepository {
   /// fire-and-forget outbox push resolving to `synced` (receipt doc §10).
   Future<ReceiptData> confirmSale({
     required List<CartLine> lines,
-    required double discountAmount,
-    String? discountApprovedBy,
     required PaymentMode paymentMode,
     required String staffName,
+    required String branchName,
   }) async {
     return ReceiptData(
       clientUuid: _newClientUuid(),
       soldAt: DateTime.now(),
       staffName: staffName,
+      branchName: branchName,
       items: [for (final l in lines) l.toReceiptLine()],
-      discountAmount: discountAmount,
-      discountApprovedBy: discountApprovedBy,
       paymentMode: paymentMode,
       syncStatus: SyncState.pending,
     );

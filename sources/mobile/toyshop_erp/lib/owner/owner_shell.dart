@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../core/core.dart';
-import 'approvals/discount_approval_screen.dart';
 import 'dashboard/dashboard_home_screen.dart';
 import 'more/more_menu_screen.dart';
 import 'purchase/new_purchase_screen.dart';
@@ -21,7 +20,6 @@ class _OwnerShellState extends State<OwnerShell> {
 
   static const _tabs = <NavItem>[
     NavItem('Home', Icons.dashboard_outlined, Icons.dashboard_rounded),
-    NavItem('Approvals', Icons.verified_outlined, Icons.verified_rounded),
     NavItem('Purchase', Icons.add_business_outlined, Icons.add_business_rounded),
     NavItem('Reports', Icons.insights_outlined, Icons.insights_rounded),
     NavItem('More', Icons.menu_rounded, Icons.menu_rounded),
@@ -31,7 +29,6 @@ class _OwnerShellState extends State<OwnerShell> {
   Widget build(BuildContext context) {
     final pages = [
       const OwnerDashboardScreen(),
-      const DiscountApprovalScreen(),
       const NewPurchaseScreen(),
       const ReportsScreen(),
       const OwnerMoreScreen(),

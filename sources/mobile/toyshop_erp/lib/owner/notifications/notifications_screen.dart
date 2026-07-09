@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/core.dart';
 import 'notifications_data.dart';
 
-/// Owner Notifications — the single inbox for discount requests, low/aging
+/// Owner Notifications — the single inbox for low/aging
 /// stock, sync failures, GST reminders and incentive/sale milestones (R6).
 /// Doc: docs/mobile/owner/notifications/notifications.md
 class NotificationsScreen extends StatefulWidget {

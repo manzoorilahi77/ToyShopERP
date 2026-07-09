@@ -120,20 +120,18 @@ ReceiptData _sale({
   String? inv,
   required DateTime at,
   required List<ReceiptLine> items,
-  double discount = 0,
-  String? discountBy,
   required PaymentMode pay,
   required SyncState sync,
   String staff = 'You',
+  String branch = 'Main Store',
 }) {
   return ReceiptData(
     clientUuid: id,
     invoiceNo: inv,
     soldAt: at,
     staffName: staff,
+    branchName: branch,
     items: items,
-    discountAmount: discount,
-    discountApprovedBy: discountBy,
     paymentMode: pay,
     syncStatus: sync,
   );
@@ -204,8 +202,8 @@ final List<ReceiptData> _demo = [
   _sale(
     id: 'a1b2c313', inv: 'GST1/26-27/000406', at: DateTime(2026, 7, 3, 11, 5),
     items: [_li('ns-03', 'Yellow Jeep Battery Car', 1, 2599)],
-    discount: 200, discountBy: 'Owner (PIN)',
     pay: PaymentMode.cash, sync: SyncState.synced,
+    branch: 'Mall Kiosk',
   ),
   _sale(
     id: 'a1b2c314', inv: 'GST1/26-27/000405', at: DateTime(2026, 7, 3, 10, 20),

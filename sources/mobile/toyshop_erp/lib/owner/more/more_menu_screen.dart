@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/core.dart';
+import '../branches/branches_screen.dart';
 import '../catalog/product_catalog_management_screen.dart';
 import '../gst/gst_registrations_screen.dart';
 import '../notifications/notifications_screen.dart';
@@ -45,6 +46,8 @@ class OwnerMoreScreen extends StatelessWidget {
           const SizedBox(height: 18),
           _tile(context, Icons.inventory_2_rounded, 'Product Catalog',
               'Add, edit, deactivate products', const ProductCatalogManagementScreen()),
+          _tile(context, Icons.store_rounded, 'Branches Management',
+              'View and add branches', const BranchesScreen()),
           _tile(context, Icons.groups_rounded, 'Staff Management',
               'Roster, PINs, incentive rules', const StaffManagementScreen()),
           _tile(context, Icons.description_rounded, 'GST Registrations',

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/core.dart';
+import '../../core/models/branch.dart';
+import '../../core/models/branches_data.dart';
 import '../notifications/notifications_screen.dart';
 import 'dashboard_data.dart';
 
@@ -16,55 +18,97 @@ class OwnerDashboardScreen extends StatefulWidget {
 class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   final _repo = const OwnerDashboardRepository();
   OwnerDashboardData? _data;
+  String? _selectedBranchId; // null means 'All Branches'
 
   @override
   void initState() {
     super.initState();
-    _repo.load().then((d) {
-      if (mounted) setState(() => _data = d);
-    });
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final d = await _repo.load(branchId: _selectedBranchId);
+    if (mounted) setState(() => _data = d);
   }
 
   @override
   Widget build(BuildContext context) {
     final data = _data;
-    return AppScaffold(
-      title: 'ToyShop · Owner',
-      subtitle: data == null
-          ? null
-          : '${Fmt.dateMed(data.date)} · updated ${Fmt.ago(data.asOf)}',
-      actions: [
-        if (data != null)
-          _BellButton(
-            count: data.unreadNotifications,
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-            ),
-          ),
-      ],
-      body: data == null
-          ? _loading()
-          : RefreshIndicator(
-              onRefresh: () async => setState(() {}),
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                children: [
-                  _kpiGrid(data),
-                  const SizedBox(height: 18),
-                  _sectionTitle('🏆  Top performer today'),
-                  const SizedBox(height: 8),
-                  _topPerformer(data.topPerformer),
-                  const SizedBox(height: 18),
-                  _sectionTitle('⚠  Alerts'),
-                  const SizedBox(height: 8),
-                  _alerts(data),
-                  const SizedBox(height: 18),
-                  _sectionTitle('Quick nav'),
-                  const SizedBox(height: 8),
-                  _quickNav(),
-                ],
+    return ListenableBuilder(
+      listenable: branchesData,
+      builder: (context, _) {
+        final branches = branchesData.branches;
+        return AppScaffold(
+          title: 'ToyShop · Owner',
+          subtitle: data == null
+              ? null
+              : '${Fmt.dateMed(data.date)} · updated ${Fmt.ago(data.asOf)}',
+          actions: [
+            if (data != null)
+              _BellButton(
+                count: data.unreadNotifications,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                ),
               ),
-            ),
+          ],
+          body: data == null
+              ? _loading()
+              : RefreshIndicator(
+                  onRefresh: _loadData,
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                    children: [
+                      _branchSelector(branches),
+                      const SizedBox(height: 18),
+                      _kpiGrid(data),
+                      const SizedBox(height: 18),
+                      _sectionTitle('🏆  Top performer today'),
+                      const SizedBox(height: 8),
+                      _topPerformer(data.topPerformer),
+                      const SizedBox(height: 18),
+                      _sectionTitle('⚠  Alerts'),
+                      const SizedBox(height: 8),
+                      _alerts(data),
+                      const SizedBox(height: 18),
+                      _sectionTitle('Quick nav'),
+                      const SizedBox(height: 8),
+                      _quickNav(),
+                    ],
+                  ),
+                ),
+        );
+      },
+    );
+  }
+
+  Widget _branchSelector(List<Branch> branches) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: context.palette.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String?>(
+          value: _selectedBranchId,
+          isExpanded: true,
+          icon: Icon(Icons.arrow_drop_down_rounded, color: context.palette.primary),
+          items: [
+            const DropdownMenuItem(value: null, child: Text('All Branches')),
+            ...branches.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))),
+          ],
+          onChanged: (val) {
+            if (_selectedBranchId != val) {
+              setState(() {
+                _selectedBranchId = val;
+                _data = null; // show loading
+              });
+              _loadData();
+            }
+          },
+        ),
+      ),
     );
   }
 
@@ -73,7 +117,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 1.5,
+        childAspectRatio: 1.35,
         children: const [
           SkeletonBox(radius: 12),
           SkeletonBox(radius: 12),
@@ -92,7 +136,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       crossAxisCount: 2,
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
-      childAspectRatio: 1.45,
+      childAspectRatio: 1.35,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: [

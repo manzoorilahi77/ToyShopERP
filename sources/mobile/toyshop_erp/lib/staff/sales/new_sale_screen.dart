@@ -6,6 +6,7 @@ import '../../core/core.dart';
 import 'new_sale_data.dart';
 import 'receipt_data.dart';
 import 'receipt_screen.dart';
+import '../../core/models/branches_data.dart';
 
 /// Staff New Sale — the billing engine. A single screen with a sheet stack
 /// (not a wizard): find item (quick-pick / category / search / QR / voice) →
@@ -33,12 +34,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   ProductCategory? _selectedCategory;
   String _query = '';
   PaymentMode _paymentMode = PaymentMode.cash;
-  double _discountAmount = 0;
-  String? _discountApprovedBy;
+  String? _selectedBranchId;
 
   double get _subtotal => _cart.fold(0.0, (a, l) => a + l.lineTotal);
   double get _gstTotal => _cart.fold(0.0, (a, l) => a + l.toReceiptLine().gstAmount);
-  double get _cartTotal => _subtotal - _discountAmount;
+  double get _cartTotal => _subtotal;
   int get _cartUnits => _cart.fold(0, (a, l) => a + l.qty);
 
   @override
@@ -112,9 +112,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   /// The expanded `CartSheet` (design-system §6) — running total, swipe-to-
-  /// remove lines, discount, payment mode and Confirm, all rebuilt live via
-  /// [StatefulBuilder] over the shared `_cart`/`_discountAmount`/
-  /// `_paymentMode` fields.
+  /// remove lines, payment mode and Confirm, all rebuilt live via
+  /// [StatefulBuilder] over the shared `_cart`/`_paymentMode` fields.
   void _openCart() {
     showModalBottomSheet<void>(
       context: context,
@@ -368,31 +367,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         children: [
           LabeledRow('Subtotal', MoneyText(Fmt.money(subtotal))),
           LabeledRow(
-            'Discount',
-            _discountAmount > 0
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      MoneyText('− ${Fmt.money(_discountAmount)}', color: p.danger),
-                      const SizedBox(width: 6),
-                      InkWell(
-                        borderRadius: BorderRadius.circular(999),
-                        onTap: () => setSheetState(() {
-                          _discountAmount = 0;
-                          _discountApprovedBy = null;
-                        }),
-                        child: Icon(Icons.close_rounded, size: 16, color: p.inkMuted),
-                      ),
-                    ],
-                  )
-                : TextButton.icon(
-                    style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
-                    onPressed: _cart.isEmpty ? null : () => _openDiscountSheet(subtotal, setSheetState),
-                    icon: const Icon(Icons.lock_rounded, size: 14),
-                    label: const Text('Add discount'),
-                  ),
-          ),
-          LabeledRow(
             'GST (incl.)',
             Text('(${Fmt.money(_gstTotal)})', style: AppType.caption.copyWith(color: p.inkMuted)),
           ),
@@ -405,6 +379,31 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             onChanged: (v) => setSheetState(() => _paymentMode = v),
           ),
           const SizedBox(height: 12),
+          ListenableBuilder(
+            listenable: branchesData,
+            builder: (context, _) {
+              final branches = branchesData.branches;
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: p.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _selectedBranchId == null ? p.danger : p.border),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String?>(
+                    value: _selectedBranchId,
+                    isExpanded: true,
+                    hint: const Text('Select Branch (Required)'),
+                    icon: Icon(Icons.store_rounded, color: p.primary),
+                    items: branches.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))).toList(),
+                    onChanged: (val) => setSheetState(() => _selectedBranchId = val),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
           if (_cart.isEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -414,7 +413,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             height: AppSpacing.primaryAction,
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: _cart.isEmpty ? null : _confirmSale,
+              onPressed: (_cart.isEmpty || _selectedBranchId == null) ? null : _confirmSale,
               icon: const Icon(Icons.check_circle_rounded),
               label: const Text('CONFIRM SALE'),
             ),
@@ -424,141 +423,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  /// Discount request sheet (new-sale doc §5 rows 13–17) — amount or percent,
-  /// optional reason, resolved to a rupee amount and gated by
-  /// [showOwnerPinSheet] (rule 7/8a). Never applied without approval, so
-  /// Confirm is never blocked by a half-authorised discount.
-  Future<void> _openDiscountSheet(double subtotal, StateSetter setCartSheetState) async {
-    bool isPercent = false;
-    String buffer = '';
-    final reasonCtrl = TextEditingController();
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => StatefulBuilder(
-        builder: (sheetCtx, setD) {
-          final p = context.palette;
-          final numVal = double.tryParse(buffer) ?? 0;
-          final resolved = isPercent ? subtotal * numVal / 100 : numVal;
-          final overLimit = isPercent ? numVal > 100 : numVal > subtotal;
-          final canRequest = numVal > 0 && !overLimit;
-          return Padding(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              20,
-              20,
-              20 + MediaQuery.of(sheetCtx).viewInsets.bottom + MediaQuery.of(sheetCtx).padding.bottom,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.sell_rounded, color: p.info),
-                      const SizedBox(width: 8),
-                      Text('Add discount', style: AppType.title.copyWith(color: p.ink)),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  _Segmented<bool>(
-                    value: isPercent,
-                    options: const {false: 'Amount ₹', true: 'Percent %'},
-                    onChanged: (v) => setD(() {
-                      isPercent = v;
-                      buffer = '';
-                    }),
-                  ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: Text(
-                      buffer.isEmpty
-                          ? (isPercent ? '0%' : Fmt.money0(0))
-                          : (isPercent ? '$buffer%' : Fmt.money0(numVal)),
-                      style: AppType.display.copyWith(color: p.ink),
-                    ),
-                  ),
-                  if (numVal > 0 && !overLimit)
-                    Center(
-                      child: Text(
-                        'New total: ${Fmt.money((subtotal - resolved).clamp(0, subtotal))}',
-                        style: AppType.caption.copyWith(color: p.success, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  if (overLimit)
-                    Center(
-                      child: Text(
-                        isPercent ? 'Max 100%' : 'Cannot exceed subtotal ${Fmt.money0(subtotal)}',
-                        style: AppType.caption.copyWith(color: p.danger, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  const SizedBox(height: 14),
-                  NumericPad(
-                    onKey: (d) => setD(() {
-                      if (buffer.length < 6) buffer += d;
-                    }),
-                    onDelete: () =>
-                        setD(() => buffer = buffer.isEmpty ? '' : buffer.substring(0, buffer.length - 1)),
-                  ),
-                  const SizedBox(height: 14),
-                  TextField(
-                    controller: reasonCtrl,
-                    maxLength: 255,
-                    decoration: const InputDecoration(
-                      labelText: 'Reason (optional)',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  SizedBox(
-                    height: AppSpacing.primaryAction,
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: canRequest
-                          ? () async {
-                              final reason = reasonCtrl.text.trim();
-                              final ok = await showOwnerPinSheet(
-                                context,
-                                title: 'Approve discount',
-                                subtitle: '${Fmt.money(resolved)} off'
-                                    '${reason.isEmpty ? '' : ' · $reason'}',
-                              );
-                              if (!context.mounted) return;
-                              // Guarded immediately above with no intervening
-                              // await; the analyzer can't trace `mounted`
-                              // through this StatefulBuilder+sheetCtx nesting.
-                              // ignore: use_build_context_synchronously
-                              final messenger = ScaffoldMessenger.of(context);
-                              if (ok == true) {
-                                setCartSheetState(() {
-                                  _discountAmount = resolved.clamp(0, subtotal).toDouble();
-                                  _discountApprovedBy = 'Owner (PIN)';
-                                });
-                                Navigator.of(sheetCtx).pop();
-                                messenger.showSnackBar(
-                                  const SnackBar(content: Text('Discount approved')),
-                                );
-                              } else {
-                                messenger.showSnackBar(
-                                  const SnackBar(content: Text('Discount not approved')),
-                                );
-                              }
-                            }
-                          : null,
-                      icon: const Icon(Icons.lock_rounded, size: 18),
-                      label: const Text('Request owner approval'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-    reasonCtrl.dispose();
-  }
+  // discount request sheet removed
 
   /// Writes the sale (rule 1: never blocks) and routes to the receipt. If
   /// this screen was pushed on top of something (dashboard button/quick-pick/
@@ -566,23 +431,24 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   /// on that origin** (receipt doc: "from a fresh sale → dashboard"); if it's
   /// the persistent Sell tab, the receipt is simply pushed above it.
   Future<void> _confirmSale() async {
-    if (_cart.isEmpty) return;
+    if (_cart.isEmpty || _selectedBranchId == null) return;
     final nav = Navigator.of(context);
     final isFirstRoute = ModalRoute.of(context)?.isFirst ?? true;
     final session = SessionScope.of(context);
+    
+    final branchName = branchesData.branches.firstWhere((b) => b.id == _selectedBranchId).name;
+
     final receipt = await _repo.confirmSale(
       lines: _cart,
-      discountAmount: _discountAmount,
-      discountApprovedBy: _discountApprovedBy,
       paymentMode: _paymentMode,
       staffName: session.account?.name ?? 'Staff',
+      branchName: branchName,
     );
     if (!mounted) return;
     setState(() {
       _cart = [];
-      _discountAmount = 0;
-      _discountApprovedBy = null;
       _paymentMode = PaymentMode.cash;
+      _selectedBranchId = null;
       _selectedCategory = null;
       _query = '';
       _searchCtrl.clear();
@@ -612,8 +478,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     if (res == true && mounted) {
       setState(() {
         _cart = [];
-        _discountAmount = 0;
-        _discountApprovedBy = null;
       });
       if (Navigator.of(context).canPop()) Navigator.of(context).pop();
     }

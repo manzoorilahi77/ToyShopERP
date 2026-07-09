@@ -84,9 +84,8 @@ class ReceiptData {
     this.invoiceNo,
     required this.soldAt,
     required this.staffName,
+    required this.branchName,
     required this.items,
-    this.discountAmount = 0,
-    this.discountApprovedBy,
     required this.paymentMode,
     required this.syncStatus,
   });
@@ -99,9 +98,8 @@ class ReceiptData {
   final String? invoiceNo;
   final DateTime soldAt;
   final String staffName;
+  final String branchName;
   final List<ReceiptLine> items;
-  final double discountAmount;
-  final String? discountApprovedBy;
   final PaymentMode paymentMode;
   final SyncState syncStatus;
 
@@ -130,7 +128,7 @@ class ReceiptData {
   double get cgst => gstTotal / 2;
   double get sgst => gstTotal / 2;
 
-  double get total => grossTotal - discountAmount;
+  double get total => grossTotal;
 
   ReceiptData copyWith({String? invoiceNo, SyncState? syncStatus}) {
     return ReceiptData(
@@ -138,9 +136,8 @@ class ReceiptData {
       invoiceNo: invoiceNo ?? this.invoiceNo,
       soldAt: soldAt,
       staffName: staffName,
+      branchName: branchName,
       items: items,
-      discountAmount: discountAmount,
-      discountApprovedBy: discountApprovedBy,
       paymentMode: paymentMode,
       syncStatus: syncStatus ?? this.syncStatus,
     );

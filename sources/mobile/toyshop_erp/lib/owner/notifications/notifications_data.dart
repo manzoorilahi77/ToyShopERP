@@ -14,12 +14,6 @@ import '../../core/core.dart';
 /// icon/tone used for its tinted circle + filter chip, and a human label for
 /// the deep-link target it opens (§8 routing table).
 enum NotifType {
-  discount(
-    label: 'Discount',
-    icon: Icons.local_offer_rounded,
-    tone: Tone.warning,
-    target: 'Discount Approval',
-  ),
   lowStock(
     label: 'Low stock',
     icon: Icons.warning_amber_rounded,
@@ -111,13 +105,6 @@ class OwnerNotificationsRepository {
 /// 2026-07-03 19:45 to line up with [Fmt.ago]'s default reference clock.
 final List<AppNotification> _demo = [
   AppNotification(
-    id: 'n1',
-    type: NotifType.discount,
-    title: 'Discount request · Ravi Kumar',
-    body: '10% on Red Racer Car · cart ₹1,500',
-    createdAt: DateTime(2026, 7, 3, 19, 44, 48),
-  ),
-  AppNotification(
     id: 'n2',
     type: NotifType.sync,
     title: 'Sync failed · 2 sales queued',
@@ -176,14 +163,6 @@ final List<AppNotification> _demo = [
     title: 'Sync failed · 1 purchase queued',
     body: 'Retries exhausted on device dev-def456',
     createdAt: DateTime(2026, 6, 25, 11, 0),
-    isRead: true,
-  ),
-  AppNotification(
-    id: 'n10',
-    type: NotifType.discount,
-    title: 'Discount request · Meena S.',
-    body: '15% on Wooden Train Set · cart ₹2,200',
-    createdAt: DateTime(2026, 6, 20, 9, 15),
     isRead: true,
   ),
 ];
