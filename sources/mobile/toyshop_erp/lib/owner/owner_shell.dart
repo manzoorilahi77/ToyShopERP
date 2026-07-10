@@ -5,6 +5,7 @@ import 'dashboard/dashboard_home_screen.dart';
 import 'more/more_menu_screen.dart';
 import 'purchase/new_purchase_screen.dart';
 import 'reports/reports_screen.dart';
+import 'stock_addition/stock_addition_screen.dart';
 
 /// Owner app shell — lightweight, glanceable. Bottom nav holds the 4 highest-
 /// frequency owner actions; the remaining screens live under "More".
@@ -20,7 +21,7 @@ class _OwnerShellState extends State<OwnerShell> {
 
   static const _tabs = <NavItem>[
     NavItem('Home', Icons.dashboard_outlined, Icons.dashboard_rounded),
-    NavItem('Purchase', Icons.add_business_outlined, Icons.add_business_rounded),
+    NavItem('Stock Addition', Icons.inventory_2_outlined, Icons.inventory_2_rounded),
     NavItem('Reports', Icons.insights_outlined, Icons.insights_rounded),
     NavItem('More', Icons.menu_rounded, Icons.menu_rounded),
   ];
@@ -29,7 +30,7 @@ class _OwnerShellState extends State<OwnerShell> {
   Widget build(BuildContext context) {
     final pages = [
       const OwnerDashboardScreen(),
-      const NewPurchaseScreen(),
+      const StockAdditionScreen(),
       const ReportsScreen(),
       const OwnerMoreScreen(),
     ];
