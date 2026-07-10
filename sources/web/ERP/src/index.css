@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6; /* Base Royal Blue ish */
+  --color-primary-600: #2563eb; /* Royal Blue */
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  
+  --color-sky-400: #38bdf8; /* Sky Blue */
+
+  --color-accent-orange: #f97316;
+  --color-accent-yellow: #facc15;
+  
+  --color-support-green: #22c55e;
+  --color-support-purple: #a855f7;
+
+  --color-bg-soft: #f8fafc; /* Soft White / Light Gray */
+  --color-bg-white: #ffffff;
+
+  --font-sans: 'Inter', sans-serif;
+  --font-heading: 'Poppins', sans-serif;
+
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+
+@layer base {
+  :root {
+    --background: #f8fafc;
+    --foreground: #0f172a;
+  }
+  
+  html, body {
+    @apply antialiased bg-[var(--background)] text-[var(--foreground)] font-sans;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-glass rounded-2xl;
+  }
+  
+  .card {
+    @apply bg-white rounded-2xl shadow-card transition-shadow duration-300 hover:shadow-card-hover;
+  }
+  
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 font-medium tracking-wide text-white transition-colors duration-200 bg-primary-600 rounded-lg hover:bg-primary-700 focus:ring-2 focus:ring-offset-2 focus:ring-primary-600;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2 font-medium tracking-wide text-primary-700 transition-colors duration-200 bg-primary-50 rounded-lg hover:bg-primary-100 focus:ring-2 focus:ring-offset-2 focus:ring-primary-200;
+  }
+  
+  .input-field {
+    @apply flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200;
+  }
+}
