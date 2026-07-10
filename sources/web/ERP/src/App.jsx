@@ -14,6 +14,14 @@ import GstRegistrations from './pages/Owner/GstRegistrations';
 import Notifications from './pages/Owner/Notifications';
 import Settings from './pages/Owner/Settings';
 
+import SuperAdminDashboard from './pages/SuperAdmin/SuperAdminDashboard';
+import TenantsManagement from './pages/SuperAdmin/TenantsManagement';
+import SystemLogs from './pages/SuperAdmin/SystemLogs';
+import SuperAdminSettings from './pages/SuperAdmin/SuperAdminSettings';
+import GlobalStock from './pages/SuperAdmin/GlobalStock';
+import GlobalStaff from './pages/SuperAdmin/GlobalStaff';
+import Subscriptions from './pages/SuperAdmin/Subscriptions';
+
 import StaffShell from './layouts/StaffShell';
 import StaffDashboard from './pages/Staff/StaffDashboard';
 import NewSale from './pages/Staff/NewSale';
@@ -58,7 +66,13 @@ const App = () => {
 
           <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
             <Route path="/super-admin" element={<SuperAdminShell />}>
-              <Route index element={<div>Super Admin Dashboard Content</div>} />
+              <Route index element={<SuperAdminDashboard />} />
+              <Route path="tenants" element={<TenantsManagement />} />
+              <Route path="stock" element={<GlobalStock />} />
+              <Route path="staff" element={<GlobalStaff />} />
+              <Route path="subscriptions" element={<Subscriptions />} />
+              <Route path="logs" element={<SystemLogs />} />
+              <Route path="settings" element={<SuperAdminSettings />} />
             </Route>
           </Route>
 

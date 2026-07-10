@@ -13,7 +13,8 @@ const USERS = [
   { id: 3, name: 'Meena', initials: 'MR', colorClass: 'bg-pink-600', role: 'staff' },
   { id: 4, name: 'Karan', initials: 'KD', colorClass: 'bg-amber-600', role: 'staff' },
   { id: 5, name: 'Suraj', initials: 'SP', colorClass: 'bg-purple-600', role: 'staff' },
-  { id: 6, name: 'Priya', initials: 'PN', colorClass: 'bg-teal-600', role: 'super_admin', label: 'Owner' },
+  { id: 6, name: 'Priya', initials: 'PN', colorClass: 'bg-teal-600', role: 'owner', label: 'Owner' },
+  { id: 7, name: 'Admin', initials: 'SA', colorClass: 'bg-slate-800', role: 'super_admin', label: 'System' },
 ];
 
 export default function Login() {
@@ -47,13 +48,12 @@ export default function Login() {
 
   const performLogin = async (user) => {
     // Determine target route based on role
-    // Assuming super_admin acts as owner based on requirements.
-    const targetRole = user.role === 'super_admin' ? 'owner' : 'staff';
+    const targetRole = user.role;
     
     login({ id: user.id, name: user.name, initials: user.initials, role: targetRole }, targetRole);
     toast.success(`Welcome back, ${user.name}!`);
     
-    navigate(`/${targetRole}`);
+    navigate(targetRole === 'super_admin' ? '/super-admin' : `/${targetRole}`);
   };
 
   return (
