@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ScanLine, Mic, X, Plus, Minus, Trash2, ShoppingBag, Printer, Share2, CheckCircle } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-import { CATALOG, CATEGORIES } from '../../data/mockData';
+import { getCatalog, getCategories } from '../../services/productService';
+import { createSale } from '../../services/saleService';
+import useAuthStore from '../../store/authStore';
+import toast from 'react-hot-toast';
 
 export default function NewSale() {
   const [searchParams] = useSearchParams();
@@ -16,16 +19,38 @@ export default function NewSale() {
   const [showBill, setShowBill] = useState(false);
   const [lastOrder, setLastOrder] = useState(null);
 
-  // Check for auto-add item from URL
+  const { user } = useAuthStore();
+  const [catalog, setCatalog] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const addId = searchParams.get('add');
-    if (addId) {
-      const product = CATALOG.find(p => p.id === addId);
-      if (product) addToCart(product);
-    }
+    const loadData = async () => {
+      try {
+        const [catalogRes, catRes] = await Promise.all([
+          getCatalog(),
+          getCategories()
+        ]);
+        const catData = catalogRes.data || [];
+        setCatalog(catData);
+        setCategories(catRes.data || []);
+        
+        // Auto-add item from URL
+        const addId = searchParams.get('add');
+        if (addId) {
+          const product = catData.find(p => p.id === Number(addId));
+          if (product) addToCart(product);
+        }
+      } catch (error) {
+        toast.error('Failed to load catalog');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, [searchParams]);
 
-  const filteredProducts = CATALOG.filter(p => {
+  const filteredProducts = catalog.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory ? p.categoryId === selectedCategory : true;
     return matchesSearch && matchesCategory;
@@ -73,19 +98,39 @@ export default function NewSale() {
   const tax = subtotal * 0.18; // 18% GST
   const total = subtotal + tax;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) return;
-    setLastOrder({
-      id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-      items: [...cart],
-      subtotal,
-      tax,
-      total,
-      branch,
-      paymentMode,
-      date: new Date().toLocaleString()
-    });
-    setShowBill(true);
+    
+    // Default branchId if needed, in a real scenario this might come from authStore or a selector
+    const branchId = user?.branchId || 1;
+
+    const payload = {
+      branchId,
+      paymentMethod: paymentMode.toLowerCase(),
+      items: cart.map(item => ({
+        productId: item.product.id,
+        quantity: item.quantity
+      }))
+    };
+
+    try {
+      const res = await createSale(payload);
+      
+      setLastOrder({
+        id: res.data.sale.invoiceNumber,
+        items: [...cart],
+        subtotal,
+        tax,
+        total: res.data.sale.totalAmount, // from backend
+        branch,
+        paymentMode,
+        date: new Date(res.data.sale.createdAt).toLocaleString()
+      });
+      setShowBill(true);
+      toast.success('Sale completed successfully!');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to complete sale');
+    }
   };
 
   const completeAndClear = () => {
@@ -149,7 +194,7 @@ export default function NewSale() {
           >
             All Toys
           </button>
-          {CATEGORIES.map(cat => (
+          {categories.map(cat => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
@@ -166,7 +211,11 @@ export default function NewSale() {
 
         {/* Product Grid */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-32 lg:pb-6">
-          {filteredProducts.length === 0 ? (
+          {loading ? (
+            <div className="h-full flex justify-center items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">
               <ShoppingBag className="w-16 h-16 mb-4 opacity-20" />
               <p className="text-lg">No products found.</p>

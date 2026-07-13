@@ -7,6 +7,9 @@ import {
 } from 'recharts';
 import KpiCard from '../../components/ui/KpiCard';
 
+import { getOwnerDashboard } from '../../services/dashboardService';
+import toast from 'react-hot-toast';
+
 const PERIODS = ['Today', 'Yesterday', 'Last 7 Days', 'This Month'];
 const BRANCHES = ['All Branches', 'Main Branch', 'Downtown', 'Mall Kiosk'];
 
@@ -17,9 +20,39 @@ const BRANCH_MULTIPLIER = {
   'Mall Kiosk': 0.2
 };
 
-const MOCK_DATA_BY_PERIOD = {
-  'Today': {
-    revenue: 4250, orders: 156, purchases: 1840, alerts: 12,
+export default function Dashboard() {
+  const [period, setPeriod] = useState('Today');
+  const [branch, setBranch] = useState('All Branches');
+  
+  const [dashboardStats, setDashboardStats] = useState({
+    totalRevenue: 0,
+    todayRevenue: 0,
+    activeProducts: 0,
+    lowStockProducts: 0
+  });
+
+  React.useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const res = await getOwnerDashboard();
+        setDashboardStats(res.data || {
+          totalRevenue: 0, todayRevenue: 0, activeProducts: 0, lowStockProducts: 0
+        });
+      } catch (error) {
+        toast.error('Failed to load dashboard data');
+      }
+    };
+    loadStats();
+  }, []);
+
+  const mult = BRANCH_MULTIPLIER[branch] || 1;
+
+  const currentData = {
+    revenue: `₹${(dashboardStats.todayRevenue * mult).toLocaleString()}`,
+    orders: Math.floor((dashboardStats.totalRevenue / 100) * mult), // Mocking orders from revenue
+    purchases: `₹${(dashboardStats.todayRevenue * 0.4 * mult).toLocaleString()}`, // Mocking purchases
+    alerts: dashboardStats.lowStockProducts,
+    // Keep charts static mock for prototype since we don't have historical chart data API yet
     revenueData: [
       { name: '8 AM', total: 500 }, { name: '10 AM', total: 1200 }, { name: '12 PM', total: 2500 },
       { name: '2 PM', total: 3200 }, { name: '4 PM', total: 4000 }, { name: 'Now', total: 4250 },
@@ -28,59 +61,6 @@ const MOCK_DATA_BY_PERIOD = {
       { name: 'Morning', sales: 1500, purchases: 800 },
       { name: 'Afternoon', sales: 2750, purchases: 1040 },
     ]
-  },
-  'Yesterday': {
-    revenue: 3800, orders: 142, purchases: 1500, alerts: 8,
-    revenueData: [
-      { name: '8 AM', total: 400 }, { name: '10 AM', total: 1000 }, { name: '12 PM', total: 2000 },
-      { name: '2 PM', total: 2800 }, { name: '4 PM', total: 3500 }, { name: '8 PM', total: 3800 },
-    ],
-    salesData: [
-      { name: 'Morning', sales: 1200, purchases: 600 },
-      { name: 'Afternoon', sales: 2600, purchases: 900 },
-    ]
-  },
-  'Last 7 Days': {
-    revenue: 28450, orders: 945, purchases: 12300, alerts: 24,
-    revenueData: [
-      { name: 'Mon', total: 4200 }, { name: 'Tue', total: 3800 }, { name: 'Wed', total: 4500 },
-      { name: 'Thu', total: 3900 }, { name: 'Fri', total: 5100 }, { name: 'Sat', total: 6200 },
-      { name: 'Sun', total: 4800 },
-    ],
-    salesData: [
-      { name: 'Mon', sales: 4200, purchases: 1800 }, { name: 'Tue', sales: 3800, purchases: 1500 },
-      { name: 'Wed', sales: 4500, purchases: 2000 }, { name: 'Thu', sales: 3900, purchases: 1600 },
-      { name: 'Fri', sales: 5100, purchases: 2200 }, { name: 'Sat', sales: 6200, purchases: 2500 },
-      { name: 'Sun', sales: 4800, purchases: 2000 },
-    ]
-  },
-  'This Month': {
-    revenue: 112500, orders: 3850, purchases: 48200, alerts: 45,
-    revenueData: [
-      { name: 'Week 1', total: 28000 }, { name: 'Week 2', total: 32000 }, 
-      { name: 'Week 3', total: 29000 }, { name: 'Week 4', total: 33500 },
-    ],
-    salesData: [
-      { name: 'Week 1', sales: 28000, purchases: 12000 }, { name: 'Week 2', sales: 32000, purchases: 14000 },
-      { name: 'Week 3', sales: 29000, purchases: 11500 }, { name: 'Week 4', sales: 33500, purchases: 15000 },
-    ]
-  }
-};
-
-export default function Dashboard() {
-  const [period, setPeriod] = useState('Today');
-  const [branch, setBranch] = useState('All Branches');
-  
-  const baseData = MOCK_DATA_BY_PERIOD[period];
-  const mult = BRANCH_MULTIPLIER[branch];
-
-  const currentData = {
-    revenue: `$${(baseData.revenue * mult).toLocaleString()}`,
-    orders: Math.floor(baseData.orders * mult),
-    purchases: `$${(baseData.purchases * mult).toLocaleString()}`,
-    alerts: Math.max(1, Math.floor(baseData.alerts * mult)),
-    revenueData: baseData.revenueData.map(d => ({ ...d, total: d.total * mult })),
-    salesData: baseData.salesData.map(d => ({ ...d, sales: d.sales * mult, purchases: d.purchases * mult }))
   };
 
   return (

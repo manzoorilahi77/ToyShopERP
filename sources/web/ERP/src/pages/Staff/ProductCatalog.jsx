@@ -1,15 +1,35 @@
 import React, { useState } from 'react';
 import { Search, ScanLine, Mic, X, Star, Filter } from 'lucide-react';
-import { CATALOG, CATEGORIES } from '../../data/mockData';
 import { motion } from 'framer-motion';
+import { getCatalog, getCategories, toggleFavorite as toggleFavoriteAPI } from '../../services/productService';
+import toast from 'react-hot-toast';
 
 export default function ProductCatalog() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
-  // We need local state for favorites to allow toggling in the UI
-  const [catalog, setCatalog] = useState(CATALOG);
+  const [catalog, setCatalog] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [catalogRes, catRes] = await Promise.all([
+          getCatalog(),
+          getCategories()
+        ]);
+        setCatalog(catalogRes.data || []);
+        setCategories(catRes.data || []);
+      } catch (error) {
+        toast.error('Failed to load catalog');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
   const filteredProducts = catalog.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -18,10 +38,15 @@ export default function ProductCatalog() {
     return matchesSearch && matchesCategory && matchesFavorites;
   });
 
-  const toggleFavorite = (productId) => {
-    setCatalog(prev => prev.map(p => 
-      p.id === productId ? { ...p, isFavorite: !p.isFavorite } : p
-    ));
+  const toggleFavorite = async (productId) => {
+    try {
+      await toggleFavoriteAPI(productId);
+      setCatalog(prev => prev.map(p => 
+        p.id === productId ? { ...p, isFavorite: !p.isFavorite } : p
+      ));
+    } catch (error) {
+      toast.error('Failed to update favorite status');
+    }
   };
 
   return (
@@ -92,7 +117,7 @@ export default function ProductCatalog() {
           >
             All Categories
           </button>
-          {CATEGORIES.map(cat => (
+          {categories.map(cat => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
@@ -109,7 +134,11 @@ export default function ProductCatalog() {
       </div>
 
       {/* Product Grid */}
-      {filteredProducts.length === 0 ? (
+      {loading ? (
+        <div className="py-20 flex justify-center text-primary-600">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>
+      ) : filteredProducts.length === 0 ? (
         <div className="py-20 flex flex-col items-center justify-center text-slate-400 bg-white rounded-2xl border border-slate-100 border-dashed">
           <Search className="w-16 h-16 mb-4 opacity-20" />
           <p className="text-lg font-medium text-slate-600">No toys found.</p>
@@ -153,7 +182,7 @@ export default function ProductCatalog() {
                 
                 <div className="p-4">
                   <span className="text-xs font-medium text-primary mb-1 block">
-                    {CATEGORIES.find(c => c.id === product.categoryId)?.name}
+                    {categories.find(c => c.id === product.categoryId)?.name}
                   </span>
                   <p className="font-semibold text-slate-800 text-sm md:text-base line-clamp-2 leading-tight mb-3">
                     {product.name}

@@ -1,14 +1,37 @@
 import React, { useState } from 'react';
 import { Calendar, Filter, Download, ReceiptText, Search, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
-import { SALES_HISTORY, STAFF_STATS } from '../../data/mockData';
 import KpiCard from '../../components/ui/KpiCard';
+import { getSalesHistory } from '../../services/saleService';
+import { getStaffDashboard } from '../../services/dashboardService';
+import toast from 'react-hot-toast';
 
 export default function SalesHistory() {
   const [filter, setFilter] = useState('today'); // today, week, month
   const [searchQuery, setSearchQuery] = useState('');
+  const [salesHistory, setSalesHistory] = useState([]);
+  const [staffStats, setStaffStats] = useState({ salesToday: 0, revenueToday: 0 });
+  const [loading, setLoading] = useState(true);
 
-  const filteredHistory = SALES_HISTORY.filter(sale => {
-    return sale.id.toLowerCase().includes(searchQuery.toLowerCase());
+  React.useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [salesRes, statsRes] = await Promise.all([
+          getSalesHistory(),
+          getStaffDashboard()
+        ]);
+        setSalesHistory(salesRes.data || []);
+        setStaffStats(statsRes.data || { salesToday: 0, revenueToday: 0 });
+      } catch (error) {
+        toast.error('Failed to load sales history');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  const filteredHistory = salesHistory.filter(sale => {
+    return sale.invoiceNumber?.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   return (
@@ -35,18 +58,14 @@ export default function SalesHistory() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <KpiCard
           title="Sales Today"
-          value={STAFF_STATS.salesToday}
+          value={staffStats.salesToday}
           icon={ReceiptText}
-          trend="up"
-          trendValue="12%"
           colorClass="bg-blue-100 text-blue-600"
         />
         <KpiCard
           title="Revenue Today"
-          value={`₹${STAFF_STATS.revenueToday.toLocaleString()}`}
+          value={`₹${staffStats.revenueToday.toLocaleString()}`}
           icon={ReceiptText}
-          trend="up"
-          trendValue={`${STAFF_STATS.trendPct}%`}
           colorClass="bg-green-100 text-green-600"
         />
         <div className="card p-6 flex flex-col justify-center">
@@ -105,21 +124,27 @@ export default function SalesHistory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredHistory.map((sale) => (
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="p-8 text-center text-slate-500">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                  </td>
+                </tr>
+              ) : filteredHistory.map((sale) => (
                 <tr key={sale.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4">
-                    <span className="font-semibold text-slate-800">{sale.id}</span>
+                    <span className="font-semibold text-slate-800">{sale.invoiceNumber}</span>
                   </td>
                   <td className="p-4">
                     <div className="flex items-center text-slate-500">
                       <Clock className="w-4 h-4 mr-2" />
-                      {sale.time}
+                      {new Date(sale.createdAt).toLocaleTimeString()}
                     </div>
                   </td>
-                  <td className="p-4 text-slate-600">{sale.items} items</td>
-                  <td className="p-4 font-bold text-slate-800 text-right">₹{sale.total}</td>
+                  <td className="p-4 text-slate-600">{sale.items?.length || 0} items</td>
+                  <td className="p-4 font-bold text-slate-800 text-right">₹{sale.totalAmount}</td>
                   <td className="p-4 text-center">
-                    {sale.status === 'synced' ? (
+                    {sale.status === 'completed' ? (
                       <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
                         <CheckCircle2 className="w-3 h-3 mr-1" /> Synced
                       </span>
@@ -136,7 +161,7 @@ export default function SalesHistory() {
                   </td>
                 </tr>
               ))}
-              {filteredHistory.length === 0 && (
+              {!loading && filteredHistory.length === 0 && (
                 <tr>
                   <td colSpan="6" className="p-8 text-center text-slate-500">
                     No transactions found for the selected criteria.

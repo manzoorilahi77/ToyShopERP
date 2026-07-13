@@ -7,35 +7,53 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import toast from 'react-hot-toast';
 
-// Mock Data
-const productsData = [
-  { id: '1', sku: 'TY-001', name: 'Lego City Police Station', category: 'Building Blocks', stock: 45, price: 99.99, status: 'In Stock' },
-  { id: '2', sku: 'TY-002', name: 'Barbie Dreamhouse', category: 'Dolls', stock: 12, price: 199.99, status: 'Low Stock' },
-  { id: '3', sku: 'TY-003', name: 'Hot Wheels Track Builder', category: 'Vehicles', stock: 0, price: 49.99, status: 'Out of Stock' },
-  { id: '4', sku: 'TY-004', name: 'Monopoly Classic', category: 'Board Games', stock: 85, price: 29.99, status: 'In Stock' },
-  { id: '5', sku: 'TY-005', name: 'Nerf Elite Blaster', category: 'Action', stock: 34, price: 39.99, status: 'In Stock' },
-];
+import { getCatalog, getCategories, createProduct } from '../../services/productService';
 
 const productSchema = z.object({
   name: z.string().min(2, 'Name is required'),
   sku: z.string().min(2, 'SKU is required'),
-  category: z.string().min(2, 'Category is required'),
+  categoryId: z.number().min(1, 'Category is required'),
   price: z.number().min(0, 'Price must be positive'),
   stock: z.number().min(0, 'Stock must be 0 or more')
 });
 
+
 export default function ProductsList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [prodRes, catRes] = await Promise.all([getCatalog(), getCategories()]);
+      setProducts(prodRes.data || []);
+      setCategories(catRes.data || []);
+    } catch (error) {
+      toast.error('Failed to load products');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: zodResolver(productSchema)
   });
 
-  const onSubmit = (data) => {
-    console.log(data);
-    toast.success('Product added successfully!');
-    setIsModalOpen(false);
-    reset();
+  const onSubmit = async (data) => {
+    try {
+      await createProduct({ ...data, image: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&w=300&q=80' });
+      toast.success('Product added successfully!');
+      setIsModalOpen(false);
+      reset();
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to add product');
+    }
   };
 
   const columns = React.useMemo(
@@ -43,7 +61,7 @@ export default function ProductsList() {
       {
         accessorKey: 'sku',
         header: 'SKU',
-        cell: info => <span className="font-mono text-sm">{info.getValue()}</span>,
+        cell: info => <span className="font-mono text-sm">TY-{info.row.original.id.toString().padStart(3, '0')}</span>,
       },
       {
         accessorKey: 'name',
@@ -53,11 +71,12 @@ export default function ProductsList() {
       {
         accessorKey: 'category',
         header: 'Category',
+        cell: info => <span>{info.row.original.category?.name || 'N/A'}</span>,
       },
       {
         accessorKey: 'price',
         header: 'Price',
-        cell: info => `$${info.getValue().toFixed(2)}`,
+        cell: info => `$${Number(info.getValue() || 0).toFixed(2)}`,
       },
       {
         accessorKey: 'stock',
@@ -67,11 +86,17 @@ export default function ProductsList() {
         accessorKey: 'status',
         header: 'Status',
         cell: info => {
-          const status = info.getValue();
-          let color = 'bg-slate-100 text-slate-800';
-          if (status === 'In Stock') color = 'bg-green-100 text-green-800';
-          else if (status === 'Low Stock') color = 'bg-orange-100 text-orange-800';
-          else if (status === 'Out of Stock') color = 'bg-red-100 text-red-800';
+          const stock = info.row.original.stock;
+          let status = 'In Stock';
+          let color = 'bg-green-100 text-green-800';
+          
+          if (stock === 0) {
+            status = 'Out of Stock';
+            color = 'bg-red-100 text-red-800';
+          } else if (stock < 10) {
+            status = 'Low Stock';
+            color = 'bg-orange-100 text-orange-800';
+          }
           
           return (
             <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${color}`}>
@@ -114,10 +139,16 @@ export default function ProductsList() {
         </button>
       </div>
 
-      <DataTable 
-        data={productsData} 
-        columns={columns} 
-      />
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>
+      ) : (
+        <DataTable 
+          data={products} 
+          columns={columns} 
+        />
+      )}
 
       <Modal
         isOpen={isModalOpen}
@@ -138,15 +169,13 @@ export default function ProductsList() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
-              <select {...register('category')} className="input-field">
+              <select {...register('categoryId', { valueAsNumber: true })} className="input-field">
                 <option value="">Select Category</option>
-                <option value="Building Blocks">Building Blocks</option>
-                <option value="Dolls">Dolls</option>
-                <option value="Vehicles">Vehicles</option>
-                <option value="Board Games">Board Games</option>
-                <option value="Action">Action Figures</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
               </select>
-              {errors.category && <p className="mt-1 text-xs text-red-500">{errors.category.message}</p>}
+              {errors.categoryId && <p className="mt-1 text-xs text-red-500">{errors.categoryId.message}</p>}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

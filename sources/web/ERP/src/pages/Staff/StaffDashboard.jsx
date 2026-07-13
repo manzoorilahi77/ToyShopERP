@@ -4,13 +4,57 @@ import { IndianRupee, ShoppingCart, Award, Target, ChevronRight } from 'lucide-r
 import { Link } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import KpiCard from '../../components/ui/KpiCard';
-import { STAFF_STATS, LEADERBOARD, CATALOG } from '../../data/mockData';
+import { getStaffDashboard, getLeaderboard } from '../../services/dashboardService';
+import { getCatalog } from '../../services/productService';
+import toast from 'react-hot-toast';
 
 export default function StaffDashboard() {
   const { user } = useAuthStore();
-  
-  // Get just a few items for quick picks
-  const quickPicks = CATALOG.filter(c => c.isFavorite).slice(0, 4);
+  const [staffStats, setStaffStats] = React.useState({ salesToday: 0, revenueToday: 0, points: 0 });
+  const [leaderboard, setLeaderboard] = React.useState([]);
+  const [quickPicks, setQuickPicks] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const [statsRes, leaderboardRes, catalogRes] = await Promise.all([
+          getStaffDashboard(),
+          getLeaderboard(),
+          getCatalog()
+        ]);
+        
+        setStaffStats(statsRes.data || { salesToday: 0, revenueToday: 0, points: 0 });
+        
+        // Setup leaderboard with initials/color
+        const lbData = (leaderboardRes.data || []).map((u, idx) => ({
+          ...u,
+          rank: idx + 1,
+          isMe: u.id === user?.id,
+          initials: u.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2),
+          color: 'bg-blue-600' // Default or dynamic later
+        }));
+        setLeaderboard(lbData);
+
+        // Get favorites
+        const favorites = (catalogRes.data || []).filter(c => c.isFavorite).slice(0, 4);
+        setQuickPicks(favorites);
+      } catch (error) {
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDashboardData();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="p-6 md:p-8 max-w-7xl mx-auto flex justify-center py-24">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto pb-24">
@@ -34,34 +78,26 @@ export default function StaffDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <KpiCard
           title="Sales Today"
-          value={STAFF_STATS.salesToday}
+          value={staffStats.salesToday}
           icon={ShoppingCart}
-          trend="up"
-          trendValue="12%"
           colorClass="bg-blue-100 text-blue-600"
         />
         <KpiCard
           title="Revenue Today"
-          value={`₹${STAFF_STATS.revenueToday.toLocaleString()}`}
+          value={`₹${staffStats.revenueToday.toLocaleString()}`}
           icon={IndianRupee}
-          trend="up"
-          trendValue={`${STAFF_STATS.trendPct}%`}
           colorClass="bg-green-100 text-green-600"
         />
         <KpiCard
-          title="Points This Month"
-          value={STAFF_STATS.monthPoints}
+          title="Total Points"
+          value={staffStats.points}
           icon={Award}
-          trend="up"
-          trendValue="5%"
           colorClass="bg-purple-100 text-purple-600"
         />
         <KpiCard
           title="Leaderboard Rank"
-          value={STAFF_STATS.rankLabel}
+          value={`#${leaderboard.find(l => l.isMe)?.rank || '-'}`}
           icon={Target}
-          trend="up"
-          trendValue="Maintained"
           colorClass="bg-orange-100 text-orange-600"
         />
       </div>
@@ -75,7 +111,7 @@ export default function StaffDashboard() {
           </div>
           
           <div className="space-y-4">
-            {LEADERBOARD.map((person) => (
+            {leaderboard.map((person) => (
               <div 
                 key={person.id} 
                 className={`flex items-center p-3 rounded-xl transition-colors ${
@@ -96,6 +132,9 @@ export default function StaffDashboard() {
                 </div>
               </div>
             ))}
+            {leaderboard.length === 0 && (
+              <p className="text-sm text-slate-500 text-center py-4">No users found on leaderboard.</p>
+            )}
           </div>
         </div>
 

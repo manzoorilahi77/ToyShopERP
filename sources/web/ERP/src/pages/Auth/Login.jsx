@@ -1,59 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import { ToyBrick, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PinModal from '../../components/auth/PinModal';
-
-// Static users based on the flutter app screenshot
-const USERS = [
-  { id: 1, name: 'Ravi', initials: 'RK', colorClass: 'bg-blue-600', role: 'staff' },
-  { id: 2, name: 'Anbu', initials: 'AS', colorClass: 'bg-green-600', role: 'staff' },
-  { id: 3, name: 'Meena', initials: 'MR', colorClass: 'bg-pink-600', role: 'staff' },
-  { id: 4, name: 'Karan', initials: 'KD', colorClass: 'bg-amber-600', role: 'staff' },
-  { id: 5, name: 'Suraj', initials: 'SP', colorClass: 'bg-purple-600', role: 'staff' },
-  { id: 6, name: 'Priya', initials: 'PN', colorClass: 'bg-teal-600', role: 'owner', label: 'Owner' },
-  { id: 7, name: 'Admin', initials: 'SA', colorClass: 'bg-slate-800', role: 'super_admin', label: 'System' },
-];
+import api from '../../services/api';
+import { loginAPI } from '../../services/authService';
 
 export default function Login() {
   const login = useAuthStore(state => state.login);
   const navigate = useNavigate();
   
+  const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await api.get('/auth/users');
+        setUsers(res.data.data || []);
+      } catch (error) {
+        toast.error('Failed to load users.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const handleUserClick = (user) => {
     setSelectedUser(user);
-    if (user.role === 'super_admin' || user.role === 'owner') {
-      setIsPinModalOpen(true);
-    } else {
-      // For staff, we'll log them in directly for this prototype
-      // or we can add pin for them too later.
-      performLogin(user);
-    }
+    // Everyone uses a PIN/password in this version
+    setIsPinModalOpen(true);
   };
 
   const handlePinComplete = async (pin) => {
-    // In a real app, we'd validate the PIN.
-    // For this prototype, any PIN is accepted as per requirements.
-    setIsPinModalOpen(false);
-    
-    // Slight delay to allow modal animation to complete
-    setTimeout(() => {
-      performLogin(selectedUser);
-    }, 300);
-  };
-
-  const performLogin = async (user) => {
-    // Determine target route based on role
-    const targetRole = user.role;
-    
-    login({ id: user.id, name: user.name, initials: user.initials, role: targetRole }, targetRole);
-    toast.success(`Welcome back, ${user.name}!`);
-    
-    navigate(targetRole === 'super_admin' ? '/super-admin' : `/${targetRole}`);
+    try {
+      const response = await loginAPI(selectedUser.email, pin);
+      setIsPinModalOpen(false);
+      
+      const { user, accessToken, refreshToken } = response.data;
+      
+      // Slight delay for animation
+      setTimeout(() => {
+        login(user, { accessToken, refreshToken });
+        toast.success(`Welcome back, ${user.name}!`);
+        const normalizedRole = user.role?.name?.toLowerCase().replace(' ', '_') || 'staff';
+        navigate(normalizedRole === 'super_admin' ? '/super-admin' : `/${normalizedRole}`);
+      }, 300);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Login failed. Incorrect PIN.');
+      // Keep modal open or clear it so they can try again.
+    }
   };
 
   return (
@@ -98,7 +99,15 @@ export default function Login() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 px-4 sm:px-8"
         >
-          {USERS.map((user, idx) => (
+          {loading ? (
+            <div className="col-span-full flex justify-center py-10">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            </div>
+          ) : users.length === 0 ? (
+            <div className="col-span-full text-center py-10 text-slate-500">
+              No users found. Please seed the database.
+            </div>
+          ) : users.map((user, idx) => (
             <motion.button
               key={user.id}
               whileHover={{ scale: 1.05 }}
@@ -108,12 +117,12 @@ export default function Login() {
                 ${user.role === 'super_admin' ? 'border-teal-500 shadow-teal-100' : 'border-slate-100 hover:border-slate-300 hover:shadow-md'}
               `}
             >
-              <div className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white mb-4 ${user.colorClass}`}>
+              <div className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white mb-4 ${user.colorClass || 'bg-blue-600'}`}>
                 {user.initials}
               </div>
               <span className="text-lg font-semibold text-slate-800">{user.name}</span>
-              {user.label && (
-                <span className="text-sm font-medium text-teal-600 mt-1">{user.label}</span>
+              {user.role && user.role !== 'staff' && (
+                <span className="text-sm font-medium text-teal-600 mt-1 capitalize">{user.role.replace('_', ' ')}</span>
               )}
             </motion.button>
           ))}

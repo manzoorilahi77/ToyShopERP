@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, CheckCircle2, PackagePlus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { createProduct, getCategories } from '../../services/productService';
 
 const STOCK_COLOR_TAGS = [
   '#DC2626', // red
@@ -19,11 +20,26 @@ export default function StockAddition() {
   const [company, setCompany] = useState('');
   const [quantity, setQuantity] = useState('100');
   const [colorTag, setColorTag] = useState(STOCK_COLOR_TAGS[0]);
+  const [categoryId, setCategoryId] = useState('');
+  const [categories, setCategories] = useState([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await getCategories();
+        setCategories(res.data || []);
+      } catch (error) {
+        toast.error('Failed to load categories');
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const isValid = 
     name.trim().length > 0 &&
     company.trim().length > 0 &&
+    categoryId !== '' &&
     !isNaN(parseFloat(price)) && parseFloat(price) >= 0 &&
     !isNaN(parseInt(quantity)) && parseInt(quantity) > 0;
 
@@ -31,18 +47,29 @@ export default function StockAddition() {
     if (!isValid || saving) return;
     setSaving(true);
 
-    // Simulate API Call
-    await new Promise(resolve => setTimeout(resolve, 800));
+    try {
+      await createProduct({
+        name,
+        categoryId: parseInt(categoryId),
+        price: parseFloat(price),
+        stock: parseInt(quantity),
+        image: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&w=300&q=80'
+      });
 
-    toast.success(`${name} added to stock!`);
-    
-    // Reset form
-    setName('');
-    setPrice('');
-    setCompany('');
-    setQuantity('100');
-    setColorTag(STOCK_COLOR_TAGS[0]);
-    setSaving(false);
+      toast.success(`${name} added to stock!`);
+      
+      // Reset form
+      setName('');
+      setPrice('');
+      setCompany('');
+      setQuantity('100');
+      setCategoryId('');
+      setColorTag(STOCK_COLOR_TAGS[0]);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to add stock');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -68,6 +95,19 @@ export default function StockAddition() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Category *</label>
+              <select 
+                className="input-field w-full"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+              >
+                <option value="">Select Category</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">Price *</label>
