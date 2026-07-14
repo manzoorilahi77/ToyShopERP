@@ -1,22 +1,43 @@
-import React from 'react';
-import { Store, Users, Server, Activity, TrendingUp, DollarSign, Database, ShieldAlert } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Store, Users, Server, Activity, DollarSign, Database, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
+import api from '../../services/api';
 
-const KPIS = [
-  { id: 1, title: 'Active Tenants', value: '142', icon: Store, color: 'text-blue-600', bg: 'bg-blue-100' },
-  { id: 2, title: 'Total Users', value: '1,248', icon: Users, color: 'text-purple-600', bg: 'bg-purple-100' },
-  { id: 3, title: 'System Health', value: '99.9%', icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-  { id: 4, title: 'Monthly MRR', value: '₹4.2L', icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-100' },
-];
-
-const RECENT_ACTIVITY = [
-  { id: 1, text: 'New tenant "Kids Paradise" registered', time: '10 mins ago', type: 'success' },
-  { id: 2, text: 'Database backup completed successfully', time: '1 hour ago', type: 'info' },
-  { id: 3, text: 'High CPU usage detected on Node-03', time: '2 hours ago', type: 'warning' },
-  { id: 4, text: 'System update v2.4 deployed', time: '5 hours ago', type: 'success' },
-];
+const ICON_MAP = {
+  Store,
+  Users,
+  Activity,
+  DollarSign
+};
 
 export default function SuperAdminDashboard() {
+  const [kpis, setKpis] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/superadmin/dashboard');
+      if (response.data.success) {
+        setKpis(response.data.data.kpis);
+        setRecentActivity(response.data.data.recentActivity);
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="p-8 text-center text-slate-500">Loading dashboard...</div>;
+  }
+
   return (
     <div className="max-w-7xl mx-auto pb-24">
       <div className="mb-8">
@@ -26,23 +47,26 @@ export default function SuperAdminDashboard() {
 
       {/* KPIs Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {KPIS.map((kpi, idx) => (
-          <motion.div 
-            key={kpi.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <div className={`p-3 rounded-xl ${kpi.bg} ${kpi.color}`}>
-                <kpi.icon className="w-6 h-6" />
+        {kpis.map((kpi, idx) => {
+          const IconComponent = ICON_MAP[kpi.iconName] || Activity;
+          return (
+            <motion.div 
+              key={kpi.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
+              className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className={`p-3 rounded-xl ${kpi.bg} ${kpi.color}`}>
+                  <IconComponent className="w-6 h-6" />
+                </div>
               </div>
-            </div>
-            <p className="text-sm font-semibold text-slate-500 mb-1">{kpi.title}</p>
-            <h3 className="text-3xl font-bold text-slate-900 font-heading">{kpi.value}</h3>
-          </motion.div>
-        ))}
+              <p className="text-sm font-semibold text-slate-500 mb-1">{kpi.title}</p>
+              <h3 className="text-3xl font-bold text-slate-900 font-heading">{kpi.value}</h3>
+            </motion.div>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -88,7 +112,7 @@ export default function SuperAdminDashboard() {
             </h2>
           </div>
           <div className="space-y-4">
-            {RECENT_ACTIVITY.map((activity) => (
+            {recentActivity.map((activity) => (
               <div key={activity.id} className="flex gap-4">
                 <div className="mt-1">
                   {activity.type === 'success' && <div className="w-2 h-2 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></div>}

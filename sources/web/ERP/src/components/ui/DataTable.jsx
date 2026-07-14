@@ -10,9 +10,11 @@ import {
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Search, SlidersHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function DataTable({ data, columns, title }) {
+export default function DataTable({ data, columns, title, filters }) {
   const [sorting, setSorting] = useState([]);
   const [globalFilter, setGlobalFilter] = useState('');
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const table = useReactTable({
     data,
@@ -20,9 +22,11 @@ export default function DataTable({ data, columns, title }) {
     state: {
       sorting,
       globalFilter,
+      columnFilters,
     },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -45,10 +49,60 @@ export default function DataTable({ data, columns, title }) {
               placeholder="Search all columns..."
             />
           </div>
-          <button className="btn-secondary h-9 px-3">
-            <SlidersHorizontal className="w-4 h-4 mr-2" />
-            Filter
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className="btn-secondary h-9 px-3"
+            >
+              <SlidersHorizontal className="w-4 h-4 mr-2" />
+              Filter
+            </button>
+            {isFilterOpen && filters && filters.length > 0 && (
+              <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-lg shadow-xl z-50 p-4">
+                <h4 className="text-sm font-semibold text-slate-800 mb-3">Filters</h4>
+                <div className="space-y-4">
+                  {filters.map(filter => {
+                    const activeFilter = columnFilters.find(f => f.id === filter.id);
+                    return (
+                      <div key={filter.id}>
+                        <label className="block text-xs font-medium text-slate-700 mb-1">{filter.label}</label>
+                        <select 
+                          className="w-full text-sm border-slate-300 rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                          value={activeFilter?.value ?? ''}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setColumnFilters(prev => {
+                              const newFilters = prev.filter(f => f.id !== filter.id);
+                              if (val) {
+                                newFilters.push({ id: filter.id, value: val });
+                              }
+                              return newFilters;
+                            });
+                          }}
+                        >
+                          <option value="">All {filter.label}</option>
+                          {filter.options.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
+                  <button 
+                    onClick={() => {
+                      setColumnFilters([]);
+                      setIsFilterOpen(false);
+                    }}
+                    className="text-xs text-slate-500 hover:text-slate-700 font-medium"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

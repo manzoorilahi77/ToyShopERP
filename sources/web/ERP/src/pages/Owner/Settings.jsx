@@ -1,16 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Bell, Shield, Moon, Monitor, Smartphone, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function Settings() {
-  const [settings, setSettings] = useState({
-    pushNotifs: true,
-    emailNotifs: false,
-    darkMode: false,
-    twoFactor: true,
-  });
+const SETTINGS_KEY = 'toyshop_owner_settings';
 
+const DEFAULT_SETTINGS = {
+  pushNotifs: true,
+  emailNotifs: false,
+  darkMode: false,
+  twoFactor: true,
+};
+
+export default function Settings() {
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(SETTINGS_KEY);
+      if (stored) {
+        setSettings(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error('Failed to load settings from localStorage', e);
+    }
+  }, []);
 
   const toggle = (key) => {
     setSettings(prev => ({ ...prev, [key]: !prev[key] }));
@@ -18,9 +32,19 @@ export default function Settings() {
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 800));
-    toast.success('Settings saved successfully');
-    setSaving(false);
+    try {
+      // Simulate API delay for better UX
+      await new Promise(r => setTimeout(r, 800));
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      
+      // If dark mode changes, we could apply a class to the body here if we implemented dark mode
+      
+      toast.success('Settings saved successfully');
+    } catch (error) {
+      toast.error('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

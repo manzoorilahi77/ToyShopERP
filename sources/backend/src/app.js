@@ -19,6 +19,7 @@ const purchaseRoutes = require('./routes/purchaseRoutes');
 const gstRoutes = require('./routes/gstRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const superAdminRoutes = require('./routes/superAdminRoutes');
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/v1/purchases', purchaseRoutes);
 app.use('/api/v1/gst-registrations', gstRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/superadmin', superAdminRoutes);
 
 // 404 Handler
 app.use((req, res, next) => {

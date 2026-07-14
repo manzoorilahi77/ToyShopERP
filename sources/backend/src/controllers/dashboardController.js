@@ -1,4 +1,4 @@
-const { Sale, Product, User, sequelize } = require('../models');
+const { Sale, SaleItem, Product, User, sequelize } = require('../models');
 const { successResponse, errorResponse } = require('../utils/response');
 const { Op } = require('sequelize');
 
@@ -40,12 +40,22 @@ exports.getStaffDashboard = async (req, res) => {
       where: { userId, createdAt: { [Op.gte]: today } }
     });
 
+    const myLifetimeSales = await Sale.count({ where: { userId } });
+    const myLifetimeRevenue = await Sale.sum('totalAmount', { where: { userId } });
+    
+    // Fetch user's sale IDs first to avoid Sequelize sum() include bug
+    const userSales = await Sale.findAll({ where: { userId }, attributes: ['id'] });
+    const saleIds = userSales.map(s => s.id);
+    const myLifetimeUnits = await SaleItem.sum('quantity', { where: { saleId: saleIds } });
+
     const user = await User.findByPk(userId, { attributes: ['points'] });
 
     return successResponse(res, 200, 'Staff dashboard stats', {
       salesToday: myTodaySales || 0,
       revenueToday: myTodayRevenue || 0,
       points: user ? user.points : 0,
+      lifetimeUnits: myLifetimeUnits || 0,
+      lifetimeRevenue: myLifetimeRevenue || 0,
     });
   } catch (error) {
     return errorResponse(res, 500, 'Error loading staff dashboard', [error.message]);

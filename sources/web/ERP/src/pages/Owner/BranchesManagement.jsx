@@ -1,39 +1,64 @@
-import React, { useState } from 'react';
-import { Store, Plus, MapPin, Trash2, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Store, Plus, MapPin, Trash2, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import api from '../../services/api';
 
 export default function BranchesManagement() {
-  const [branches, setBranches] = useState([
-    { id: 'b1', name: 'Main Branch', location: 'City Center' },
-    { id: 'b2', name: 'Downtown Branch', location: 'Downtown' },
-    { id: 'b3', name: 'Mall Kiosk', location: 'Westend Mall' },
-  ]);
-
+  const [branches, setBranches] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState('');
   const [newLocation, setNewLocation] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleAdd = () => {
+  useEffect(() => {
+    fetchBranches();
+  }, []);
+
+  const fetchBranches = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/branches');
+      setBranches(res.data?.data || []);
+    } catch (error) {
+      toast.error('Failed to load branches');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdd = async () => {
     if (!newName.trim() || !newLocation.trim()) {
       toast.error('Please enter name and location');
       return;
     }
     
-    setBranches(prev => [
-      ...prev, 
-      { id: `b${Date.now()}`, name: newName, location: newLocation }
-    ]);
-    
-    toast.success('Branch added successfully!');
-    setNewName('');
-    setNewLocation('');
-    setShowModal(false);
+    try {
+      setSaving(true);
+      await api.post('/branches', { name: newName, location: newLocation });
+      toast.success('Branch added successfully!');
+      setNewName('');
+      setNewLocation('');
+      setShowModal(false);
+      fetchBranches();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to add branch');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDelete = (id) => {
-    setBranches(prev => prev.filter(b => b.id !== id));
-    toast.success('Branch removed');
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this branch?')) return;
+    
+    try {
+      await api.delete(`/branches/${id}`);
+      setBranches(prev => prev.filter(b => b.id !== id));
+      toast.success('Branch removed');
+    } catch (error) {
+      toast.error('Failed to remove branch');
+    }
   };
 
   return (
@@ -52,46 +77,52 @@ export default function BranchesManagement() {
         </button>
       </div>
 
-      <div className="space-y-4">
-        <AnimatePresence>
-          {branches.map(branch => (
-            <motion.div 
-              key={branch.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="card p-4 flex items-center justify-between group transition-shadow hover:shadow-md"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-                  <Store className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-800 text-lg">{branch.name}</h3>
-                  <p className="text-slate-500 text-sm flex items-center mt-1">
-                    <MapPin className="w-4 h-4 mr-1 text-slate-400" />
-                    {branch.location}
-                  </p>
-                </div>
-              </div>
-              <button 
-                onClick={() => handleDelete(branch.id)}
-                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                title="Remove Branch"
+      {loading ? (
+        <div className="py-12 flex justify-center text-slate-400">
+          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <AnimatePresence>
+            {branches.map(branch => (
+              <motion.div 
+                key={branch.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="card p-4 flex items-center justify-between group transition-shadow hover:shadow-md"
               >
-                <Trash2 className="w-5 h-5" />
-              </button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-        
-        {branches.length === 0 && (
-          <div className="py-12 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
-            <Store className="w-12 h-12 mx-auto mb-3 opacity-20" />
-            <p>No branches found. Add your first branch!</p>
-          </div>
-        )}
-      </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                    <Store className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-lg">{branch.name}</h3>
+                    <p className="text-slate-500 text-sm flex items-center mt-1">
+                      <MapPin className="w-4 h-4 mr-1 text-slate-400" />
+                      {branch.location}
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => handleDelete(branch.id)}
+                  className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  title="Remove Branch"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          
+          {branches.length === 0 && (
+            <div className="py-12 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
+              <Store className="w-12 h-12 mx-auto mb-3 opacity-20" />
+              <p>No branches found. Add your first branch!</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Add Branch Modal */}
       <AnimatePresence>
@@ -142,7 +173,12 @@ export default function BranchesManagement() {
                 <button onClick={() => setShowModal(false)} className="px-6 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-colors">
                   Cancel
                 </button>
-                <button onClick={handleAdd} className="btn-primary px-6 py-2.5">
+                <button 
+                  onClick={handleAdd} 
+                  disabled={saving}
+                  className="btn-primary px-6 py-2.5 flex items-center"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                   Save Branch
                 </button>
               </div>

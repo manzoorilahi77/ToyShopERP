@@ -1,14 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingBag, Coins, Trophy, Globe, Fingerprint, Palette, LogOut, CheckCircle2, Award, ChevronRight } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
-import { STAFF_STATS, BADGES } from '../../data/mockData';
+import { BADGES } from '../../data/mockData';
 import KpiCard from '../../components/ui/KpiCard';
 import { useNavigate } from 'react-router-dom';
+import { getStaffDashboard } from '../../services/dashboardService';
+import toast from 'react-hot-toast';
 
 export default function StaffProfile() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const [stats, setStats] = useState({ lifetimeUnits: 0, lifetimeRevenue: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const res = await getStaffDashboard();
+        setStats({
+          lifetimeUnits: res.data?.lifetimeUnits || 0,
+          lifetimeRevenue: res.data?.lifetimeRevenue || 0
+        });
+      } catch (error) {
+        toast.error('Failed to load profile stats');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadStats();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -20,7 +41,7 @@ export default function StaffProfile() {
       {/* Header Profile Card */}
       <div className="card p-6 md:p-8 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6">
         <div className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-lg ${user?.colorClass || 'bg-slate-800'}`}>
-          {user?.initials || 'S'}
+          {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2) : 'S'}
         </div>
         <div className="flex-1 text-center md:text-left">
           <h1 className="text-3xl font-bold text-slate-800 font-heading mb-2">{user?.name || 'Staff Member'}</h1>
@@ -39,7 +60,7 @@ export default function StaffProfile() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <KpiCard
           title="Lifetime Units Sold"
-          value={STAFF_STATS.lifetimeUnits.toLocaleString()}
+          value={loading ? '...' : stats.lifetimeUnits.toLocaleString()}
           icon={ShoppingBag}
           trend="up"
           trendValue="Overall"
@@ -47,7 +68,7 @@ export default function StaffProfile() {
         />
         <KpiCard
           title="Lifetime Revenue"
-          value={`₹${STAFF_STATS.lifetimeSales.toLocaleString()}`}
+          value={loading ? '...' : `₹${stats.lifetimeRevenue.toLocaleString()}`}
           icon={Coins}
           trend="up"
           trendValue="Overall"
