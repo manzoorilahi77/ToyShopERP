@@ -5,8 +5,8 @@ export const getStaffDashboard = async () => {
   return response.data;
 };
 
-export const getOwnerDashboard = async () => {
-  const response = await api.get('/dashboard/owner');
+export const getOwnerDashboard = async (params) => {
+  const response = await api.get('/dashboard/owner', { params });
   return response.data;
 };
 

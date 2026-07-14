@@ -8,10 +8,10 @@ import {
 import KpiCard from '../../components/ui/KpiCard';
 
 import { getOwnerDashboard } from '../../services/dashboardService';
+import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const PERIODS = ['Today', 'Yesterday', 'Last 7 Days', 'This Month'];
-const BRANCHES = ['All Branches', 'Main Branch', 'Downtown', 'Mall Kiosk'];
 
 const BRANCH_MULTIPLIER = {
   'All Branches': 1,
@@ -22,7 +22,8 @@ const BRANCH_MULTIPLIER = {
 
 export default function Dashboard() {
   const [period, setPeriod] = useState('Today');
-  const [branch, setBranch] = useState('All Branches');
+  const [branch, setBranch] = useState('all');
+  const [branchesList, setBranchesList] = useState([{ id: 'all', name: 'All Branches' }]);
   
   const [dashboardStats, setDashboardStats] = useState({
     totalRevenue: 0,
@@ -34,25 +35,39 @@ export default function Dashboard() {
   });
 
   React.useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const branchRes = await api.get('/branches').catch(() => ({ data: { data: [] } }));
+        const fetchedBranches = branchRes.data?.data || [];
+        setBranchesList([
+          { id: 'all', name: 'All Branches' },
+          ...fetchedBranches
+        ]);
+      } catch (error) {
+        console.error('Failed to load branches');
+      }
+    };
+    loadBranches();
+  }, []);
+
+  React.useEffect(() => {
     const loadStats = async () => {
       try {
-        const res = await getOwnerDashboard();
+        const res = await getOwnerDashboard({ branchId: branch, period });
         setDashboardStats(res.data || {
-          totalRevenue: 0, todayRevenue: 0, activeProducts: 0, lowStockProducts: 0, revenueData: [], salesData: []
+          totalRevenue: 0, todayRevenue: 0, todayOrders: 0, todayPurchases: 0, activeProducts: 0, lowStockProducts: 0, revenueData: [], salesData: []
         });
       } catch (error) {
         toast.error('Failed to load dashboard data');
       }
     };
     loadStats();
-  }, []);
-
-  const mult = BRANCH_MULTIPLIER[branch] || 1;
+  }, [branch, period]);
 
   const currentData = {
-    revenue: `₹${(dashboardStats.todayRevenue * mult).toLocaleString()}`,
-    orders: Math.floor((dashboardStats.totalRevenue / 100) * mult), // Mocking orders from revenue
-    purchases: `₹${(dashboardStats.todayRevenue * 0.4 * mult).toLocaleString()}`, // Mocking purchases
+    revenue: `₹${(dashboardStats.todayRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
+    orders: dashboardStats.todayOrders || 0,
+    purchases: `₹${(dashboardStats.todayPurchases || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
     alerts: dashboardStats.lowStockProducts,
     revenueData: dashboardStats.revenueData?.length ? dashboardStats.revenueData : [
       { name: '8 AM', total: 0 }, { name: '10 AM', total: 0 }, { name: '12 PM', total: 0 },
@@ -69,7 +84,7 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 font-heading">Dashboard Overview</h1>
-          <p className="text-slate-500 mt-1 text-sm">Welcome back, here's what's happening {period.toLowerCase()} at {branch}.</p>
+          <p className="text-slate-500 mt-1 text-sm">Welcome back, here's what's happening {period.toLowerCase()} for the selected branch.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
@@ -78,7 +93,7 @@ export default function Dashboard() {
               onChange={(e) => setBranch(e.target.value)}
               className="appearance-none bg-white border border-slate-200 rounded-lg pl-4 pr-10 py-2.5 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
             >
-              {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
+              {branchesList.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
             <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>

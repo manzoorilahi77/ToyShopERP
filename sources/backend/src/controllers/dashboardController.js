@@ -7,9 +7,20 @@ exports.getOwnerDashboard = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const totalRevenue = await Sale.sum('totalAmount');
+    const branchId = req.query.branchId;
+    const branchFilter = (branchId && branchId !== 'all') ? { branchId } : {};
+
+    const totalRevenue = await Sale.sum('totalAmount', { where: branchFilter });
     const todayRevenue = await Sale.sum('totalAmount', {
-      where: { createdAt: { [Op.gte]: today } }
+      where: { ...branchFilter, createdAt: { [Op.gte]: today } }
+    });
+    
+    const todayOrders = await Sale.count({
+      where: { ...branchFilter, createdAt: { [Op.gte]: today } }
+    });
+    
+    const todayPurchases = await Purchase.sum('totalAmount', {
+      where: { ...branchFilter, createdAt: { [Op.gte]: today } }
     });
 
     const activeProducts = await Product.count({ where: { isActive: true } });
@@ -17,12 +28,12 @@ exports.getOwnerDashboard = async (req, res) => {
 
     // Fetch today's sales and purchases for charts
     const todaysSales = await Sale.findAll({
-      where: { createdAt: { [Op.gte]: today } },
+      where: { ...branchFilter, createdAt: { [Op.gte]: today } },
       attributes: ['totalAmount', 'createdAt']
     });
 
     const todaysPurchases = await Purchase.findAll({
-      where: { createdAt: { [Op.gte]: today } },
+      where: { ...branchFilter, createdAt: { [Op.gte]: today } },
       attributes: ['totalAmount', 'createdAt']
     });
 
@@ -79,6 +90,8 @@ exports.getOwnerDashboard = async (req, res) => {
     return successResponse(res, 200, 'Owner dashboard stats', {
       totalRevenue: totalRevenue || 0,
       todayRevenue: todayRevenue || 0,
+      todayOrders: todayOrders || 0,
+      todayPurchases: todayPurchases || 0,
       activeProducts,
       lowStockProducts,
       revenueData,

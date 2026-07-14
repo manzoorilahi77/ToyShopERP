@@ -149,8 +149,8 @@ export default function Reports() {
           revenue: 0
         };
       }
-      productSalesMap[item.productId].qty += item.quantity;
-      productSalesMap[item.productId].revenue += item.subTotal;
+      productSalesMap[item.productId].qty += Number(item.quantity);
+      productSalesMap[item.productId].revenue += Number(item.subTotal);
     });
   });
   
