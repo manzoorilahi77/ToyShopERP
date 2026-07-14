@@ -12,6 +12,10 @@ const Sale = sequelize.define('Sale', {
     allowNull: false,
     defaultValue: 0,
   },
+  customerMobile: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   paymentMethod: {
     type: DataTypes.ENUM('cash', 'card', 'upi'),
     defaultValue: 'cash',

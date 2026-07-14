@@ -4,6 +4,7 @@ import { Search, ScanLine, Mic, X, Plus, Minus, Trash2, ShoppingBag, Printer, Sh
 import { useSearchParams } from 'react-router-dom';
 import { getCatalog, getCategories } from '../../services/productService';
 import { createSale } from '../../services/saleService';
+import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
 
@@ -14,10 +15,12 @@ export default function NewSale() {
   
   // Cart state: array of { product, quantity, unitPrice }
   const [cart, setCart] = useState([]);
-  const [branch, setBranch] = useState('Main Branch');
+  const [branch, setBranch] = useState('');
+  const [branches, setBranches] = useState([]);
   const [paymentMode, setPaymentMode] = useState('Cash');
   const [showBill, setShowBill] = useState(false);
   const [lastOrder, setLastOrder] = useState(null);
+  const [customerMobile, setCustomerMobile] = useState('');
 
   const { user } = useAuthStore();
   const [catalog, setCatalog] = useState([]);
@@ -27,13 +30,20 @@ export default function NewSale() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [catalogRes, catRes] = await Promise.all([
+        const [catalogRes, catRes, branchRes] = await Promise.all([
           getCatalog(),
-          getCategories()
+          getCategories(),
+          api.get('/branches').catch(() => ({ data: { data: [] } }))
         ]);
         const catData = catalogRes.data || [];
         setCatalog(catData);
         setCategories(catRes.data || []);
+        
+        const fetchedBranches = branchRes.data?.data || [];
+        setBranches(fetchedBranches);
+        if (fetchedBranches.length > 0) {
+          setBranch(fetchedBranches[0].id);
+        }
         
         // Auto-add item from URL
         const addId = searchParams.get('add');
@@ -102,11 +112,14 @@ export default function NewSale() {
     if (cart.length === 0) return;
     
     // Default branchId if needed, in a real scenario this might come from authStore or a selector
-    const branchId = user?.branchId || 1;
+    const branchId = branch || user?.branchId || 1;
+    const selectedBranchObj = branches.find(b => b.id === Number(branchId));
+    const branchName = selectedBranchObj ? selectedBranchObj.name : 'Main Branch';
 
     const payload = {
       branchId,
       paymentMethod: paymentMode.toLowerCase(),
+      customerMobile: customerMobile,
       items: cart.map(item => ({
         productId: item.product.id,
         quantity: item.quantity
@@ -122,8 +135,9 @@ export default function NewSale() {
         subtotal,
         tax,
         total: res.data.sale.totalAmount, // from backend
-        branch,
+        branch: branchName,
         paymentMode,
+        customerMobile,
         date: new Date(res.data.sale.createdAt).toLocaleString()
       });
       setShowBill(true);
@@ -137,6 +151,7 @@ export default function NewSale() {
     setShowBill(false);
     setCart([]);
     setLastOrder(null);
+    setCustomerMobile('');
   };
 
   const handlePrint = () => {
@@ -146,7 +161,8 @@ export default function NewSale() {
   const handleShare = () => {
     if (!lastOrder) return;
     const text = `*Toy Shop Receipt*\nOrder ID: ${lastOrder.id}\nDate: ${lastOrder.date}\nBranch: ${lastOrder.branch}\n\nTotal: ₹${lastOrder.total.toFixed(2)}\nThank you for shopping with us!`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    const mobileParam = lastOrder.customerMobile ? `${lastOrder.customerMobile}` : '';
+    window.open(`https://wa.me/${mobileParam}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
@@ -371,9 +387,10 @@ export default function NewSale() {
                   onChange={(e) => setBranch(e.target.value)}
                   className="w-full text-sm p-2 border border-slate-200 rounded-lg bg-slate-50 focus:ring-1 focus:ring-primary outline-none"
                 >
-                  <option>Main Branch</option>
-                  <option>Downtown Branch</option>
-                  <option>Mall Kiosk</option>
+                  {branches.length === 0 && <option value="">Loading...</option>}
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
                 </select>
               </div>
               <div className="flex-1">
@@ -388,6 +405,16 @@ export default function NewSale() {
                   <option>UPI</option>
                 </select>
               </div>
+            </div>
+            <div className="mb-3">
+              <label className="text-xs font-semibold text-slate-500 mb-1 block">Customer Mobile</label>
+              <input 
+                type="text" 
+                value={customerMobile}
+                onChange={(e) => setCustomerMobile(e.target.value)}
+                placeholder="e.g. 9876543210 (Optional)"
+                className="w-full text-sm p-2 border border-slate-200 rounded-lg bg-slate-50 focus:ring-1 focus:ring-primary outline-none"
+              />
             </div>
             <div className="flex justify-between text-sm text-slate-500">
               <span>Subtotal</span>

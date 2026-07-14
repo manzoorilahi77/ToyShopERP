@@ -43,7 +43,7 @@ exports.getSaleById = async (req, res) => {
 exports.createSale = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const { branchId, items, paymentMethod } = req.body;
+    const { branchId, items, paymentMethod, customerMobile } = req.body;
     const userId = req.user.id;
 
     let totalAmount = 0;
@@ -86,6 +86,7 @@ exports.createSale = async (req, res) => {
       branchId,
       userId,
       totalAmount,
+      customerMobile,
       paymentMethod,
       status: 'completed'
     }, { transaction });

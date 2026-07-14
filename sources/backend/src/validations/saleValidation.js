@@ -6,6 +6,7 @@ const createSaleValidation = [
   body('items.*.productId').notEmpty().withMessage('Product ID is required for each item').isInt(),
   body('items.*.quantity').notEmpty().isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
   body('paymentMethod').optional().isIn(['cash', 'card', 'upi']).withMessage('Invalid payment method'),
+  body('customerMobile').optional().isString().withMessage('Customer mobile must be a string'),
 ];
 
 module.exports = {
