@@ -16,6 +16,31 @@ export default function PinModal({ isOpen, onClose, onPinComplete, user }) {
     }
   }, [pin, onPinComplete]);
 
+  // Keyboard support — digits, Backspace, Enter
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      // Digit keys: top row (0–9) and numpad (Numpad0–Numpad9)
+      if (/^[0-9]$/.test(e.key) || (e.code && e.code.startsWith('Numpad') && /^[0-9]$/.test(e.key))) {
+        setPin(prev => prev.length < 4 ? prev + e.key : prev);
+      } else if (e.key === 'Backspace') {
+        setPin(prev => prev.slice(0, -1));
+      } else if (e.key === 'Enter') {
+        setPin(prev => {
+          if (prev.length > 0) {
+            onPinComplete(prev);
+            return '';
+          }
+          return prev;
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onPinComplete]);
+
   // Handle number click
   const handleNumberClick = (num) => {
     if (pin.length < 4) {
