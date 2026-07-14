@@ -28,7 +28,9 @@ export default function Dashboard() {
     totalRevenue: 0,
     todayRevenue: 0,
     activeProducts: 0,
-    lowStockProducts: 0
+    lowStockProducts: 0,
+    revenueData: [],
+    salesData: []
   });
 
   React.useEffect(() => {
@@ -36,7 +38,7 @@ export default function Dashboard() {
       try {
         const res = await getOwnerDashboard();
         setDashboardStats(res.data || {
-          totalRevenue: 0, todayRevenue: 0, activeProducts: 0, lowStockProducts: 0
+          totalRevenue: 0, todayRevenue: 0, activeProducts: 0, lowStockProducts: 0, revenueData: [], salesData: []
         });
       } catch (error) {
         toast.error('Failed to load dashboard data');
@@ -52,14 +54,13 @@ export default function Dashboard() {
     orders: Math.floor((dashboardStats.totalRevenue / 100) * mult), // Mocking orders from revenue
     purchases: `₹${(dashboardStats.todayRevenue * 0.4 * mult).toLocaleString()}`, // Mocking purchases
     alerts: dashboardStats.lowStockProducts,
-    // Keep charts static mock for prototype since we don't have historical chart data API yet
-    revenueData: [
-      { name: '8 AM', total: 500 }, { name: '10 AM', total: 1200 }, { name: '12 PM', total: 2500 },
-      { name: '2 PM', total: 3200 }, { name: '4 PM', total: 4000 }, { name: 'Now', total: 4250 },
+    revenueData: dashboardStats.revenueData?.length ? dashboardStats.revenueData : [
+      { name: '8 AM', total: 0 }, { name: '10 AM', total: 0 }, { name: '12 PM', total: 0 },
+      { name: '2 PM', total: 0 }, { name: '4 PM', total: 0 }, { name: '6 PM', total: 0 },
     ],
-    salesData: [
-      { name: 'Morning', sales: 1500, purchases: 800 },
-      { name: 'Afternoon', sales: 2750, purchases: 1040 },
+    salesData: dashboardStats.salesData?.length ? dashboardStats.salesData : [
+      { name: 'Morning', sales: 0, purchases: 0 },
+      { name: 'Afternoon', sales: 0, purchases: 0 },
     ]
   };
 
