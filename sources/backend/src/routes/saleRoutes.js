@@ -7,8 +7,10 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 router.use(authenticate);
 
+router.get('/my-sales', authorize('Staff', 'Manager', 'Owner'), saleController.getMySales);
 router.get('/', authorize('Super Admin', 'Owner', 'Manager', 'Staff'), saleController.getAllSales);
 router.get('/:id', authorize('Super Admin', 'Owner', 'Manager', 'Staff'), saleController.getSaleById);
 router.post('/', authorize('Super Admin', 'Owner', 'Manager', 'Staff'), createSaleValidation, validate, saleController.createSale);
+
 
 module.exports = router;

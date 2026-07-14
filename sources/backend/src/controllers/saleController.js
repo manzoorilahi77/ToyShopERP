@@ -1,6 +1,24 @@
 const { Sale, SaleItem, Product, User, sequelize } = require('../models');
 const { successResponse, errorResponse } = require('../utils/response');
 
+exports.getMySales = async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+
+    const sales = await Sale.findAll({
+      where: { userId },
+      include: [
+        { model: SaleItem, as: 'items', include: [{ model: Product, as: 'product' }] },
+        { model: User, as: 'user', attributes: ['id', 'name'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    return successResponse(res, 200, 'My sales retrieved successfully', sales);
+  } catch (error) {
+    return errorResponse(res, 500, 'Error retrieving sales', [error.message]);
+  }
+};
+
 exports.getAllSales = async (req, res) => {
   try {
     const { branchId, role } = req.user;
