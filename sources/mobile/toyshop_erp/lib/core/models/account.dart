@@ -26,6 +26,7 @@ class Account {
     required this.role,
     required this.initials,
     required this.photoColor,
+    this.email,
     this.joinDate,
     this.phone,
     this.isActive = true,
@@ -36,9 +37,38 @@ class Account {
   final UserRole role;
   final String initials;
   final Color photoColor;
+  final String? email;
   final DateTime? joinDate;
   final String? phone;
   final bool isActive;
 
   String get roleLabel => role.label;
+
+  factory Account.fromJson(Map<String, dynamic> json) {
+    // Determine color from colorClass, default to blue
+    Color parsedColor = const Color(0xFF2563EB); // bg-blue-600
+    if (json['colorClass'] != null) {
+      final colorStr = json['colorClass'].toString();
+      if (colorStr.contains('green')) parsedColor = const Color(0xFF16A34A);
+      if (colorStr.contains('pink')) parsedColor = const Color(0xFFDB2777);
+      if (colorStr.contains('amber')) parsedColor = const Color(0xFFD97706);
+      if (colorStr.contains('purple')) parsedColor = const Color(0xFF7C3AED);
+      if (colorStr.contains('cyan')) parsedColor = const Color(0xFF0891B2);
+    }
+
+    // Determine role
+    UserRole parsedRole = UserRole.staff;
+    if (json['role'] == 'owner') parsedRole = UserRole.owner;
+    if (json['role'] == 'accountant') parsedRole = UserRole.accountant;
+
+    return Account(
+      id: json['id'].toString(),
+      name: json['name'] ?? 'Unknown',
+      email: json['email'],
+      role: parsedRole,
+      initials: json['initials'] ?? '?',
+      photoColor: parsedColor,
+      isActive: json['isActive'] ?? true,
+    );
+  }
 }

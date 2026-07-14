@@ -60,10 +60,27 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    // PROTOTYPE: accept any 4-digit PIN. Replace with POST /auth/pin-login.
-    await Future.delayed(const Duration(milliseconds: 220));
+    if (_selected == null || _selected!.email == null) return;
+    
+    // Show a basic loading indicator if we want, or just wait
+    // We can use a local loading state or just rely on the delay
+    final success = await _repo.login(_selected!.email!, _pin);
     if (!mounted) return;
-    SessionScope.read(context).signIn(_selected!);
+    
+    if (success) {
+      SessionScope.read(context).signIn(_selected!);
+    } else {
+      setState(() {
+        _error = true;
+        _pin = '';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Invalid PIN. Please try again.'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
   }
 
   @override

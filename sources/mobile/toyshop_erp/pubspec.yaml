@@ -37,6 +37,8 @@ dependencies:
 
   # Money (₹ Indian grouping) + date formatting per design-system.md §3.
   intl: ^0.20.2
+  http: ^1.6.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

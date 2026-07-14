@@ -1,4 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../../core/api_config.dart';
+import '../../core/utils/storage_service.dart';
 
 /// PROTOTYPE DUMMY DATA — Owner Dashboard Home.
 ///
@@ -27,7 +31,11 @@ class OwnerDashboardData {
     required this.date,
     required this.asOf,
     required this.salesTotal,
+    required this.purchasesTotal,
     required this.salesTrendPct,
+    required this.ordersTrendPct,
+    required this.purchasesTrendPct,
+    required this.alertsTrendPct,
     required this.profitEstimate,
     required this.marginPct,
     required this.itemsSold,
@@ -44,7 +52,11 @@ class OwnerDashboardData {
   final DateTime date;
   final DateTime asOf;
   final double salesTotal;
+  final double purchasesTotal;
   final double salesTrendPct;
+  final double ordersTrendPct;
+  final double purchasesTrendPct;
+  final double alertsTrendPct;
   final double profitEstimate;
   final int marginPct;
   final int itemsSold;
@@ -66,22 +78,81 @@ class OwnerDashboardRepository {
     final isFiltered = branchId != null;
     final factor = isFiltered ? (branchId.hashCode.abs() % 50 + 50) / 100.0 : 1.0;
     
+    double backendSalesTotal = _demo.salesTotal * factor;
+    int backendSalesCount = (_demo.salesCount * factor).round();
+    int backendLowStockCount = isFiltered ? 2 : _demo.lowStockCount;
+    int backendAgingStockCount = isFiltered ? 5 : _demo.agingStockCount;
+    int backendUnreadNotifications = _demo.unreadNotifications;
+    int backendPendingApprovals = _demo.pendingApprovals;
+    TopPerformer backendTopPerformer = _demo.topPerformer;
+
+    double backendPurchasesTotal = 0.0;
+    try {
+      final token = await StorageService.getAccessToken();
+      var uri = Uri.parse(ApiConfig.dashboardOwner);
+      if (branchId != null) {
+        uri = uri.replace(queryParameters: {'branchId': branchId});
+      }
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['data'] != null) {
+          final stats = data['data'];
+          backendSalesTotal = double.tryParse(stats['todayRevenue']?.toString() ?? '0') ?? 0.0;
+          backendSalesCount = int.tryParse(stats['todayOrders']?.toString() ?? '0') ?? 0;
+          backendLowStockCount = int.tryParse(stats['lowStockProducts']?.toString() ?? '0') ?? 0;
+          backendPurchasesTotal = double.tryParse(stats['todayPurchases']?.toString() ?? '0') ?? 0.0;
+          
+          backendAgingStockCount = int.tryParse(stats['agingStockCount']?.toString() ?? '0') ?? backendAgingStockCount;
+          backendUnreadNotifications = int.tryParse(stats['unreadNotifications']?.toString() ?? '0') ?? backendUnreadNotifications;
+          backendPendingApprovals = int.tryParse(stats['pendingApprovals']?.toString() ?? '0') ?? backendPendingApprovals;
+
+          if (stats['topPerformer'] != null) {
+            final tp = stats['topPerformer'];
+            backendTopPerformer = TopPerformer(
+              name: tp['name']?.toString() ?? 'Unknown',
+              revenue: double.tryParse(tp['revenue']?.toString() ?? '0') ?? 0.0,
+              units: int.tryParse(tp['units']?.toString() ?? '0') ?? 0,
+              color: Color(int.tryParse(tp['color']?.replaceAll('#', '0xFF') ?? '0xFF2563EB') ?? 0xFF2563EB),
+              initials: tp['initials']?.toString() ?? 'NA',
+            );
+          }
+        }
+      } else {
+        debugPrint('Dashboard API error: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error loading owner dashboard from backend: $e');
+    }
+
     return OwnerDashboardData(
-      date: _demo.date,
-      asOf: _demo.asOf,
-      salesTotal: _demo.salesTotal * factor,
-      salesTrendPct: _demo.salesTrendPct,
+      date: DateTime.now(), // Use current date for realism
+      asOf: DateTime.now(),
+      salesTotal: backendSalesTotal,
+      purchasesTotal: backendPurchasesTotal,
+      salesTrendPct: 12.5, // Mocked from UI design
+      ordersTrendPct: 8.2, // Mocked from UI design
+      purchasesTrendPct: -4.1, // Mocked from UI design
+      alertsTrendPct: -2.0, // Mocked from UI design
       profitEstimate: _demo.profitEstimate * factor,
       marginPct: _demo.marginPct,
       itemsSold: (_demo.itemsSold * factor).round(),
-      salesCount: (_demo.salesCount * factor).round(),
+      salesCount: backendSalesCount,
       gstLiability: _demo.gstLiability * factor,
       gstPeriod: _demo.gstPeriod,
-      topPerformer: _demo.topPerformer,
-      lowStockCount: isFiltered ? 2 : _demo.lowStockCount,
-      agingStockCount: isFiltered ? 5 : _demo.agingStockCount,
-      unreadNotifications: _demo.unreadNotifications,
-      pendingApprovals: _demo.pendingApprovals,
+      topPerformer: backendTopPerformer,
+      lowStockCount: backendLowStockCount,
+      agingStockCount: backendAgingStockCount,
+      unreadNotifications: backendUnreadNotifications,
+      pendingApprovals: backendPendingApprovals,
     );
   }
 }
@@ -89,12 +160,16 @@ class OwnerDashboardRepository {
 final _demo = OwnerDashboardData(
   date: DateTime(2026, 7, 3),
   asOf: DateTime(2026, 7, 3, 19, 38),
-  salesTotal: 124850,
-  salesTrendPct: 12,
+  salesTotal: 6692.99,
+  purchasesTotal: 0.0,
+  salesTrendPct: 12.5,
+  ordersTrendPct: 8.2,
+  purchasesTrendPct: -4.1,
+  alertsTrendPct: -2.0,
   profitEstimate: 31210,
   marginPct: 25,
   itemsSold: 86,
-  salesCount: 41,
+  salesCount: 7,
   gstLiability: 18940,
   gstPeriod: '2026-07',
   topPerformer: const TopPerformer(
@@ -104,7 +179,7 @@ final _demo = OwnerDashboardData(
     color: Color(0xFF2563EB),
     initials: 'RK',
   ),
-  lowStockCount: 7,
+  lowStockCount: 0,
   agingStockCount: 12,
   unreadNotifications: 3,
   pendingApprovals: 2,

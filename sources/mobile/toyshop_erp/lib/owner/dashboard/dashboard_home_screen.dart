@@ -4,8 +4,12 @@ import '../../core/core.dart';
 import '../../core/models/branch.dart';
 import '../../core/models/branches_data.dart';
 import '../notifications/notifications_screen.dart';
+import '../purchase/new_purchase_screen.dart';
+import '../catalog/product_catalog_management_screen.dart';
+import '../staff/staff_management_screen.dart';
+import '../reports/reports_screen.dart';
+import '../gst/gst_registrations_screen.dart';
 import 'dashboard_data.dart';
-
 /// Owner Dashboard Home — the owner's glanceable pulse of the shop (R5).
 /// Doc: docs/mobile/owner/dashboard/dashboard-home.md
 class OwnerDashboardScreen extends StatefulWidget {
@@ -141,35 +145,39 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       physics: const NeverScrollableScrollPhysics(),
       children: [
         KpiCard(
-          label: 'TODAY SALES',
+          label: 'Revenue',
           value: Fmt.money0(d.salesTotal),
-          icon: Icons.payments_rounded,
-          trend: '${d.salesTrendPct.toStringAsFixed(0)}% vs avg',
+          icon: Icons.attach_money_rounded, // or Icons.currency_rupee_rounded if you prefer $
+          accent: context.palette.primary, // blue
+          trend: '${d.salesTrendPct.abs().toStringAsFixed(1)}% vs last month',
           trendUp: d.salesTrendPct >= 0,
           onTap: () {},
         ),
         KpiCard(
-          label: 'PROFIT (est.)',
-          value: Fmt.money0(d.profitEstimate),
-          icon: Icons.trending_up_rounded,
-          accent: context.palette.success,
-          footnote: '~${d.marginPct}% margin',
+          label: 'Orders',
+          value: d.salesCount.toString(),
+          icon: Icons.shopping_cart_outlined,
+          accent: context.palette.success, // green
+          trend: '${d.ordersTrendPct.abs().toStringAsFixed(1)}% vs last month',
+          trendUp: d.ordersTrendPct >= 0,
           onTap: () {},
         ),
         KpiCard(
-          label: 'ITEMS SOLD',
-          value: Fmt.count(d.itemsSold),
-          icon: Icons.shopping_bag_rounded,
-          accent: context.palette.info,
-          footnote: '${d.salesCount} sales',
+          label: 'Purchases',
+          value: Fmt.money0(d.purchasesTotal),
+          icon: Icons.shopping_bag_outlined,
+          accent: context.palette.warning, // orange
+          trend: '${d.purchasesTrendPct.abs().toStringAsFixed(1)}% vs last month',
+          trendUp: d.purchasesTrendPct >= 0,
           onTap: () {},
         ),
         KpiCard(
-          label: 'GST LIABILITY',
-          value: Fmt.money0(d.gstLiability),
-          icon: Icons.receipt_long_rounded,
-          accent: context.palette.warning,
-          footnote: 'this month · unfiled',
+          label: 'Inventory Alerts',
+          value: '${d.lowStockCount} items',
+          icon: Icons.inventory_2_outlined,
+          accent: context.palette.danger, // red
+          trend: '${d.alertsTrendPct.abs().toStringAsFixed(1)}% vs last month',
+          trendUp: d.alertsTrendPct >= 0,
           onTap: () {},
         ),
       ],
@@ -232,21 +240,23 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
   Widget _quickNav() {
     final items = [
-      ('Purchase', Icons.add_business_rounded),
-      ('Catalog', Icons.inventory_2_rounded),
-      ('Staff', Icons.groups_rounded),
-      ('Reports', Icons.insights_rounded),
-      ('GST', Icons.description_rounded),
+      ('Purchase', Icons.add_business_rounded, () => const NewPurchaseScreen()),
+      ('Catalog', Icons.inventory_2_rounded, () => const ProductCatalogManagementScreen()),
+      ('Staff', Icons.groups_rounded, () => const StaffManagementScreen()),
+      ('Reports', Icons.insights_rounded, () => const ReportsScreen()),
+      ('GST', Icons.description_rounded, () => const GstRegistrationsScreen()),
     ];
     return Wrap(
       spacing: 10,
       runSpacing: 10,
       children: [
-        for (final (label, icon) in items)
+        for (final (label, icon, screenBuilder) in items)
           ActionChip(
             avatar: Icon(icon, size: 18, color: context.palette.primary),
             label: Text(label),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => screenBuilder()));
+            },
           ),
       ],
     );

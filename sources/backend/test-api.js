@@ -6,7 +6,7 @@ const token = jwt.sign({ id: 1, role: 'Owner', branchId: 1 }, process.env.JWT_SE
 
 async function testApi() {
   try {
-    const res = await fetch('http://localhost:5000/api/v1/products', {
+    const res = await fetch('http://localhost:5000/api/v1/dashboard/owner?branchId=all&period=Today', {
       headers: {
         'Authorization': `Bearer ${token}`
       }

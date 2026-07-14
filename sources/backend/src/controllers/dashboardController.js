@@ -1,4 +1,4 @@
-const { Sale, SaleItem, Product, User, Purchase, sequelize } = require('../models');
+const { Sale, SaleItem, Product, User, Purchase, Notification, sequelize } = require('../models');
 const { successResponse, errorResponse } = require('../utils/response');
 const { Op } = require('sequelize');
 
@@ -14,17 +14,71 @@ exports.getOwnerDashboard = async (req, res) => {
     const todayRevenue = await Sale.sum('totalAmount', {
       where: { ...branchFilter, createdAt: { [Op.gte]: today } }
     });
-    
+
     const todayOrders = await Sale.count({
       where: { ...branchFilter, createdAt: { [Op.gte]: today } }
     });
-    
+
     const todayPurchases = await Purchase.sum('totalAmount', {
       where: { ...branchFilter, createdAt: { [Op.gte]: today } }
     });
 
     const activeProducts = await Product.count({ where: { isActive: true } });
     const lowStockProducts = await Product.count({ where: { stock: { [Op.lt]: 10 } } });
+
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const agingStockCount = await Product.count({
+      where: {
+        createdAt: { [Op.lt]: sixtyDaysAgo },
+        stock: { [Op.gt]: 0 }
+      }
+    });
+
+    const unreadNotifications = await Notification.count({
+      where: { userId: req.user.id, isRead: false }
+    });
+
+    const pendingApprovals = 0; // Defaulting for now
+
+    // Top Performer
+    const topSales = await Sale.findAll({
+      where: { ...branchFilter, createdAt: { [Op.gte]: today } },
+      attributes: [
+        'userId',
+        [sequelize.fn('SUM', sequelize.col('total_amount')), 'totalRevenue']
+      ],
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['name']
+      }],
+      group: ['userId', 'user.id'],
+      order: [[sequelize.literal('totalRevenue'), 'DESC']],
+      limit: 1,
+      raw: true
+    });
+
+    let topPerformer = {
+      name: 'No Sales Yet',
+      revenue: 0,
+      units: 0,
+      initials: 'NA',
+      color: '#2563EB'
+    };
+
+    if (topSales.length > 0 && topSales[0].userId) {
+      const topUserId = topSales[0].userId;
+      const revenue = parseFloat(topSales[0].totalRevenue) || 0;
+      const name = topSales[0]['user.name'] || 'Unknown';
+      const initials = name.substring(0, 2).toUpperCase() || 'NA';
+
+      const topUserSales = await Sale.findAll({ where: { ...branchFilter, userId: topUserId, createdAt: { [Op.gte]: today } }, attributes: ['id'] });
+      const topUserSaleIds = topUserSales.map(s => s.id);
+      const units = await SaleItem.sum('quantity', { where: { saleId: topUserSaleIds } }) || 0;
+
+      topPerformer = { name, revenue, units, initials, color: '#2563EB' };
+    }
 
     // Fetch today's sales and purchases for charts
     const todaysSales = await Sale.findAll({
@@ -46,7 +100,7 @@ exports.getOwnerDashboard = async (req, res) => {
       { name: '4 PM', total: 0 },
       { name: '6 PM', total: 0 },
     ];
-    
+
     const getBucketIndex = (hour) => {
       if (hour < 10) return 0;
       if (hour < 12) return 1;
@@ -94,6 +148,10 @@ exports.getOwnerDashboard = async (req, res) => {
       todayPurchases: todayPurchases || 0,
       activeProducts,
       lowStockProducts,
+      agingStockCount,
+      unreadNotifications,
+      pendingApprovals,
+      topPerformer,
       revenueData,
       salesData
     });
@@ -118,7 +176,7 @@ exports.getStaffDashboard = async (req, res) => {
 
     const myLifetimeSales = await Sale.count({ where: { userId } });
     const myLifetimeRevenue = await Sale.sum('totalAmount', { where: { userId } });
-    
+
     // Fetch user's sale IDs first to avoid Sequelize sum() include bug
     const userSales = await Sale.findAll({ where: { userId }, attributes: ['id'] });
     const saleIds = userSales.map(s => s.id);

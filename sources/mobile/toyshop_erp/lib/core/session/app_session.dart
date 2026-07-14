@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/account.dart';
+import '../utils/storage_service.dart';
 
 /// Holds the signed-in account for the running prototype. In production this
 /// would wrap the JWT session + secure token store; here it just carries the
@@ -22,6 +23,7 @@ class AppSession extends ChangeNotifier {
 
   void signOut() {
     _account = null;
+    StorageService.clearTokens();
     notifyListeners();
   }
 
