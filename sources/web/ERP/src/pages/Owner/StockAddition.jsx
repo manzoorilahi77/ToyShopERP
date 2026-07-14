@@ -23,6 +23,7 @@ export default function StockAddition() {
   const [categoryId, setCategoryId] = useState('');
   const [categories, setCategories] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [image, setImage] = useState(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -48,13 +49,16 @@ export default function StockAddition() {
     setSaving(true);
 
     try {
-      await createProduct({
-        name,
-        categoryId: parseInt(categoryId),
-        price: parseFloat(price),
-        stock: parseInt(quantity),
-        image: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&w=300&q=80'
-      });
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('categoryId', categoryId);
+      formData.append('price', price);
+      formData.append('stock', quantity);
+      if (image) {
+        formData.append('image', image);
+      }
+
+      await createProduct(formData);
 
       toast.success(`${name} added to stock!`);
       
@@ -65,6 +69,7 @@ export default function StockAddition() {
       setQuantity('100');
       setCategoryId('');
       setColorTag(STOCK_COLOR_TAGS[0]);
+      setImage(null);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to add stock');
     } finally {
@@ -121,6 +126,15 @@ export default function StockAddition() {
                   onChange={(e) => setPrice(e.target.value)}
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Product Image</label>
+              <input 
+                type="file" 
+                accept="image/*"
+                className="input-field w-full"
+                onChange={(e) => setImage(e.target.files[0])}
+              />
             </div>
           </div>
         </section>

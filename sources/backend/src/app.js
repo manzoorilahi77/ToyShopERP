@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 require('dotenv').config();
+const path = require('path');
 
 const { errorResponse } = require('./utils/response');
 
@@ -24,7 +25,7 @@ const superAdminRoutes = require('./routes/superAdminRoutes');
 const app = express();
 
 // Middlewares
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors());
 app.use(compression());
 app.use(express.json());
@@ -48,6 +49,9 @@ app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/superadmin', superAdminRoutes);
 
+// Static files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // 404 Handler
 app.use((req, res, next) => {
   errorResponse(res, 404, 'API endpoint not found');
@@ -56,6 +60,7 @@ app.use((req, res, next) => {
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
+  require('fs').appendFileSync(require('path').join(__dirname, '../error.log'), new Date().toISOString() + '\\n' + err.stack + '\\n');
   errorResponse(res, 500, 'Internal Server Error', [err.message]);
 });
 

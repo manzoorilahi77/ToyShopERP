@@ -253,7 +253,7 @@ export default function NewSale() {
                     }`}
                   >
                     <div className="h-32 sm:h-40 w-full overflow-hidden bg-slate-100 relative">
-                      <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                      <img src={product.image || 'https://placehold.co/300x200?text=No+Image'} alt={product.name} className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/300x200?text=No+Image'; }} />
                       {isOutOfStock && (
                         <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
                           <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">OUT OF STOCK</span>
@@ -325,7 +325,7 @@ export default function NewSale() {
                     className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex gap-3"
                   >
                     <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 shrink-0">
-                      <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                      <img src={item.product.image || 'https://placehold.co/300x200?text=No+Image'} alt={item.product.name} className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/300x200?text=No+Image'; }} />
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div className="flex justify-between items-start">

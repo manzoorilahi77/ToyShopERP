@@ -16,12 +16,16 @@ export const toggleFavorite = async (id) => {
 };
 
 export const createProduct = async (productData) => {
-  const response = await api.post('/products', productData);
+  const isFormData = productData instanceof FormData;
+  const config = isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+  const response = await api.post('/products', productData, config);
   return response.data;
 };
 
 export const updateProduct = async (id, productData) => {
-  const response = await api.put(`/products/${id}`, productData);
+  const isFormData = productData instanceof FormData;
+  const config = isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+  const response = await api.put(`/products/${id}`, productData, config);
   return response.data;
 };
 

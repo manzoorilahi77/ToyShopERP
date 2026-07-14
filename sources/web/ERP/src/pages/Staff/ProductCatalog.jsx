@@ -161,7 +161,7 @@ export default function ProductCatalog() {
                 }`}
               >
                 <div className="h-40 w-full overflow-hidden bg-slate-100 relative group">
-                  <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={product.image || 'https://placehold.co/300x200?text=No+Image'} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/300x200?text=No+Image'; }} />
                   
                   {isOutOfStock && (
                     <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
