@@ -16,6 +16,7 @@ const STOCK_COLOR_TAGS = [
 
 export default function StockAddition() {
   const [name, setName] = useState('');
+  const [costPrice, setCostPrice] = useState('');
   const [price, setPrice] = useState('');
   const [company, setCompany] = useState('');
   const [quantity, setQuantity] = useState('100');
@@ -43,6 +44,7 @@ export default function StockAddition() {
     name.trim().length > 0 &&
     company.trim().length > 0 &&
     categoryId !== '' &&
+    !isNaN(parseFloat(costPrice)) && parseFloat(costPrice) >= 0 &&
     !isNaN(parseFloat(price)) && parseFloat(price) >= 0 &&
     !isNaN(parseInt(quantity)) && parseInt(quantity) > 0;
 
@@ -54,6 +56,7 @@ export default function StockAddition() {
       const formData = new FormData();
       formData.append('name', name);
       formData.append('categoryId', categoryId);
+      formData.append('costPrice', costPrice);
       formData.append('price', price);
       formData.append('stock', quantity);
       formData.append('hsnCode', hsnCode);
@@ -68,6 +71,7 @@ export default function StockAddition() {
       
       // Reset form
       setName('');
+      setCostPrice('');
       setPrice('');
       setCompany('');
       setQuantity('100');
@@ -120,17 +124,34 @@ export default function StockAddition() {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Price *</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₹</span>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  className="input-field w-full pl-8"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Cost Price *</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₹</span>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    placeholder="Buying amount"
+                    className="input-field w-full pl-8"
+                    value={costPrice}
+                    onChange={(e) => setCostPrice(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Sell Price *</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₹</span>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    placeholder="Selling amount"
+                    className="input-field w-full pl-8"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
             <div>

@@ -55,7 +55,7 @@ export default function Dashboard() {
       try {
         const res = await getOwnerDashboard({ branchId: branch, period });
         setDashboardStats(res.data || {
-          totalRevenue: 0, todayRevenue: 0, todayOrders: 0, todayPurchases: 0, activeProducts: 0, lowStockProducts: 0, revenueData: [], salesData: []
+          totalRevenue: 0, todayRevenue: 0, todayOrders: 0, totalPurchases: 0, activeProducts: 0, lowStockProducts: 0, revenueData: [], salesData: []
         });
       } catch (error) {
         toast.error('Failed to load dashboard data');
@@ -67,7 +67,7 @@ export default function Dashboard() {
   const currentData = {
     revenue: `₹${(dashboardStats.todayRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
     orders: dashboardStats.todayOrders || 0,
-    purchases: `₹${(dashboardStats.todayPurchases || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
+    purchases: `₹${(dashboardStats.totalPurchases || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
     alerts: dashboardStats.lowStockProducts,
     revenueData: dashboardStats.revenueData?.length ? dashboardStats.revenueData : [
       { name: '8 AM', total: 0 }, { name: '10 AM', total: 0 }, { name: '12 PM', total: 0 },

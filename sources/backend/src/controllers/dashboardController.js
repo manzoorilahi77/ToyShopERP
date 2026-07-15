@@ -36,9 +36,11 @@ exports.getOwnerDashboard = async (req, res) => {
       where: { ...branchFilter, createdAt: dateFilter }
     });
 
-    const todayPurchases = await Purchase.sum('totalAmount', {
-      where: { ...branchFilter, createdAt: dateFilter }
-    });
+    const allProducts = await Product.findAll({ attributes: ['costPrice', 'stock'], raw: true });
+    let totalPurchases = 0;
+    for (let p of allProducts) {
+      totalPurchases += (parseFloat(p.costPrice) || 0) * (parseInt(p.stock) || 0);
+    }
 
     const activeProducts = await Product.count({ where: { isActive: true } });
     const lowStockProducts = await Product.count({ where: { stock: { [Op.lt]: 10 } } });
@@ -161,7 +163,7 @@ exports.getOwnerDashboard = async (req, res) => {
       totalRevenue: totalRevenue || 0,
       todayRevenue: todayRevenue || 0,
       todayOrders: todayOrders || 0,
-      todayPurchases: todayPurchases || 0,
+      totalPurchases: totalPurchases || 0,
       activeProducts,
       lowStockProducts,
       agingStockCount,

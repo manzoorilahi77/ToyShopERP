@@ -34,6 +34,23 @@ exports.createProduct = async (req, res) => {
       delete productData.image;
     }
     const product = await Product.create(productData);
+    
+    if (product.stock > 0 && product.costPrice > 0) {
+      const { Purchase, PurchaseItem } = require('../models');
+      const purchaseAmount = product.stock * product.costPrice;
+      const purchase = await Purchase.create({
+        totalAmount: purchaseAmount,
+        status: 'completed',
+        // Optional: you can add branchId here if req.user has it
+      });
+      await PurchaseItem.create({
+        purchaseId: purchase.id,
+        productId: product.id,
+        quantity: product.stock,
+        costPrice: product.costPrice
+      });
+    }
+
     return successResponse(res, 201, 'Product created successfully', product);
   } catch (error) {
     require('fs').appendFileSync(require('path').join(__dirname, '../../error.log'), new Date().toISOString() + '\\n' + error.stack + '\\n');
@@ -53,7 +70,27 @@ exports.updateProduct = async (req, res) => {
       delete productData.image;
     }
     
+    const oldStock = product.stock;
     await product.update(productData);
+    
+    // Log purchase if stock increased
+    if (product.stock > oldStock && product.costPrice > 0) {
+      const { Purchase, PurchaseItem } = require('../models');
+      const addedStock = product.stock - oldStock;
+      const purchaseAmount = addedStock * product.costPrice;
+      
+      const purchase = await Purchase.create({
+        totalAmount: purchaseAmount,
+        status: 'completed'
+      });
+      await PurchaseItem.create({
+        purchaseId: purchase.id,
+        productId: product.id,
+        quantity: addedStock,
+        costPrice: product.costPrice
+      });
+    }
+
     return successResponse(res, 200, 'Product updated successfully', product);
   } catch (error) {
     return errorResponse(res, 500, 'Error updating product', [error.message]);

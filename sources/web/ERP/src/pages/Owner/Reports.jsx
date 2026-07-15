@@ -147,7 +147,8 @@ export default function Reports() {
     orders: currentSales.length,
     avgValue: currentSales.length > 0 ? currentRevenue / currentSales.length : 0,
     tax: currentRevenue * 0.18,
-    trend: Number(trend.toFixed(1))
+    trend: Number(trend.toFixed(1)),
+    totalInventoryCost: products.reduce((sum, p) => sum + ((p.stock || 0) * (p.costPrice || 0)), 0)
   };
 
   const productSalesMap = {};
@@ -266,7 +267,8 @@ export default function Reports() {
       'Current Stock': p.stock,
       'Min Stock': p.minStock || 10,
       'Status': p.stock <= (p.minStock || 10) ? 'Low Stock' : 'Healthy',
-      'Price': p.price,
+      'Cost Price': p.costPrice || 0,
+      'Sell Price': p.price,
       'Added On': new Date(p.createdAt).toLocaleDateString()
     }));
 
@@ -300,6 +302,7 @@ export default function Reports() {
       { Metric: 'Total Orders', Value: currentSummary.orders },
       { Metric: 'Average Order Value', Value: currentSummary.avgValue },
       { Metric: 'Estimated Tax (GST 18%)', Value: currentSummary.tax },
+      { Metric: 'Total Inventory Value (Cost)', Value: currentSummary.totalInventoryCost },
       { Metric: 'Growth Trend (%)', Value: currentSummary.trend }
     ];
 
@@ -368,7 +371,7 @@ export default function Reports() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8"
         >
           <div className="card p-6 flex flex-col justify-between">
             <div className="flex justify-between items-start mb-4">
@@ -411,6 +414,16 @@ export default function Reports() {
             </div>
             <p className="text-sm font-semibold text-slate-500 mb-1">Tax Collected (GST)</p>
             <h3 className="text-3xl font-bold text-slate-800 font-heading">₹{currentSummary.tax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h3>
+          </div>
+
+          <div className="card p-6 flex flex-col justify-between">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+                <Package className="w-6 h-6" />
+              </div>
+            </div>
+            <p className="text-sm font-semibold text-slate-500 mb-1">Inventory Value</p>
+            <h3 className="text-3xl font-bold text-slate-800 font-heading">₹{currentSummary.totalInventoryCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h3>
           </div>
         </motion.div>
       </AnimatePresence>

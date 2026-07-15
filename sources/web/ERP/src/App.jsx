@@ -7,6 +7,7 @@ import OwnerShell from './layouts/OwnerShell';
 import OwnerDashboard from './pages/Owner/Dashboard';
 import StockAddition from './pages/Owner/StockAddition';
 import Reports from './pages/Owner/Reports';
+import OwnerSales from './pages/Owner/OwnerSales';
 import ProductsList from './pages/Owner/ProductsList'; // Using this for Catalog for now
 import BranchesManagement from './pages/Owner/BranchesManagement';
 import StaffManagement from './pages/Owner/StaffManagement';
@@ -41,12 +42,13 @@ const App = () => {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
-          
+
           <Route element={<ProtectedRoute allowedRoles={['owner', 'super_admin']} />}>
             <Route path="/owner" element={<OwnerShell />}>
               <Route index element={<OwnerDashboard />} />
               <Route path="stock-addition" element={<StockAddition />} />
               <Route path="reports" element={<Reports />} />
+              <Route path="sales" element={<OwnerSales />} />
               <Route path="catalog" element={<ProductsList />} />
               <Route path="branches" element={<BranchesManagement />} />
               <Route path="staff" element={<StaffManagement />} />

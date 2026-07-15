@@ -2,12 +2,13 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
-import { LayoutDashboard, PackagePlus, LineChart, Box, Store, Users, FileText, Bell, Settings } from 'lucide-react';
+import { LayoutDashboard, PackagePlus, LineChart, Box, Store, Users, FileText, Bell, Settings, ReceiptText } from 'lucide-react';
 
 const ownerNavItems = [
   { name: 'Home', path: '/owner', icon: LayoutDashboard },
   { name: 'Stock Addition', path: '/owner/stock-addition', icon: PackagePlus },
   { name: 'Reports', path: '/owner/reports', icon: LineChart },
+  { name: 'Sales', path: '/owner/sales', icon: ReceiptText },
   { name: 'Product Catalog', path: '/owner/catalog', icon: Box },
   { name: 'Branches', path: '/owner/branches', icon: Store },
   { name: 'Staff Management', path: '/owner/staff', icon: Users },
