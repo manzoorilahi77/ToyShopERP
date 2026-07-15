@@ -31,6 +31,7 @@ import NewSale from './pages/Staff/NewSale';
 import SalesHistory from './pages/Staff/SalesHistory';
 import ProductCatalog from './pages/Staff/ProductCatalog';
 import StaffProfile from './pages/Staff/StaffProfile';
+import OnlineOrders from './pages/Staff/OnlineOrders';
 
 import SuperAdminShell from './layouts/SuperAdminShell';
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -65,6 +66,7 @@ const App = () => {
               <Route index element={<StaffDashboard />} />
               <Route path="sell" element={<NewSale />} />
               <Route path="history" element={<SalesHistory />} />
+              <Route path="online-orders" element={<OnlineOrders />} />
               <Route path="catalog" element={<ProductCatalog />} />
               <Route path="profile" element={<StaffProfile />} />
             </Route>

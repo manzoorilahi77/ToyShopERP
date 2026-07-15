@@ -24,6 +24,18 @@ const Sale = sequelize.define('Sale', {
     type: DataTypes.ENUM('completed', 'refunded', 'failed'),
     defaultValue: 'completed',
   },
+  customerId: {
+    type: DataTypes.INTEGER,
+    allowNull: true, // Null for offline, required for online
+  },
+  orderType: {
+    type: DataTypes.ENUM('offline', 'online'),
+    defaultValue: 'offline',
+  },
+  deliveryStatus: {
+    type: DataTypes.ENUM('pending', 'accepted', 'processing', 'packed', 'out_for_delivery', 'delivered', 'cancelled'),
+    defaultValue: 'pending',
+  },
   subtotal: {
     type: DataTypes.DECIMAL(12, 2),
     allowNull: true,

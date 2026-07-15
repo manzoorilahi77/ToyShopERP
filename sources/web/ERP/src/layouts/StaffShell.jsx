@@ -1,12 +1,13 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
-import { Home, ShoppingCart, Receipt, Grid, User } from 'lucide-react';
+import { Home, ShoppingCart, Receipt, Grid, User, Globe } from 'lucide-react';
 
 const staffNavItems = [
   { name: 'Home', path: '/staff', icon: Home },
   { name: 'Sell', path: '/staff/sell', icon: ShoppingCart },
   { name: 'History', path: '/staff/history', icon: Receipt },
+  { name: 'Online Orders', path: '/staff/online-orders', icon: Globe },
   { name: 'Catalog', path: '/staff/catalog', icon: Grid },
   { name: 'Profile', path: '/staff/profile', icon: User },
 ];

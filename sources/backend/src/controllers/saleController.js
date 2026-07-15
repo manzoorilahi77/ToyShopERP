@@ -150,3 +150,37 @@ exports.createSale = async (req, res) => {
     return errorResponse(res, 400, 'Failed to complete sale', [error.message]);
   }
 };
+
+exports.getOnlineOrders = async (req, res) => {
+  try {
+    const orders = await Sale.findAll({
+      where: { orderType: 'online' },
+      include: [
+        { model: SaleItem, as: 'items', include: [{ model: Product, as: 'product' }] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    return successResponse(res, 200, 'Online orders retrieved', orders);
+  } catch (error) {
+    return errorResponse(res, 500, 'Error retrieving online orders', [error.message]);
+  }
+};
+
+exports.updateOnlineOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { deliveryStatus } = req.body;
+    const order = await Sale.findOne({ where: { id, orderType: 'online' } });
+    
+    if (!order) {
+      return errorResponse(res, 404, 'Online order not found');
+    }
+    
+    order.deliveryStatus = deliveryStatus;
+    await order.save();
+    
+    return successResponse(res, 200, 'Order status updated', order);
+  } catch (error) {
+    return errorResponse(res, 500, 'Error updating order status', [error.message]);
+  }
+};

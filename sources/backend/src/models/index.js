@@ -14,6 +14,10 @@ const Notification = require('./Notification');
 const Badge = require('./Badge');
 const UserBadge = require('./UserBadge');
 const GstRate = require('./GstRate');
+const Customer = require('./Customer');
+const CustomerAddress = require('./CustomerAddress');
+const Cart = require('./Cart');
+const CartItem = require('./CartItem');
 
 // Setup Associations
 
@@ -73,6 +77,26 @@ Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.belongsToMany(Badge, { through: UserBadge, foreignKey: 'userId', as: 'badges' });
 Badge.belongsToMany(User, { through: UserBadge, foreignKey: 'badgeId', as: 'users' });
 
+// Customer - CustomerAddress (1:N)
+Customer.hasMany(CustomerAddress, { foreignKey: 'customerId', as: 'addresses', onDelete: 'CASCADE' });
+CustomerAddress.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
+
+// Customer - Cart (1:1)
+Customer.hasOne(Cart, { foreignKey: 'customerId', as: 'cart', onDelete: 'CASCADE' });
+Cart.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
+
+// Cart - CartItem (1:N)
+Cart.hasMany(CartItem, { foreignKey: 'cartId', as: 'items', onDelete: 'CASCADE' });
+CartItem.belongsTo(Cart, { foreignKey: 'cartId', as: 'cart' });
+
+// Product - CartItem (1:N)
+Product.hasMany(CartItem, { foreignKey: 'productId', as: 'cartItems' });
+CartItem.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
+// Customer - Sale (1:N)
+Customer.hasMany(Sale, { foreignKey: 'customerId', as: 'sales' });
+Sale.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
+
 module.exports = {
   sequelize,
   Role,
@@ -90,4 +114,8 @@ module.exports = {
   Badge,
   UserBadge,
   GstRate,
+  Customer,
+  CustomerAddress,
+  Cart,
+  CartItem,
 };

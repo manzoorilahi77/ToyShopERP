@@ -6,11 +6,14 @@ const validate = require('../middleware/validate');
 const { authenticate, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
-router.use(authenticate);
-
+// Public routes
 router.get('/', productController.getAllProducts);
 router.get('/low-stock', productController.getLowStockProducts);
 router.get('/:id', productController.getProductById);
+
+// Protected routes
+router.use(authenticate);
+
 router.post('/', authorize('Super Admin', 'Owner', 'Manager'), upload.single('image'), createProductValidation, validate, productController.createProduct);
 router.put('/:id', authorize('Super Admin', 'Owner', 'Manager'), upload.single('image'), updateProductValidation, validate, productController.updateProduct);
 router.delete('/:id', authorize('Super Admin', 'Owner'), productController.deleteProduct);

@@ -33,8 +33,19 @@ exports.getOwnerDashboard = async (req, res) => {
       where: { ...branchFilter, createdAt: dateFilter }
     });
 
+    const onlineRevenue = await Sale.sum('totalAmount', { where: { ...branchFilter, orderType: 'online' } });
+    const offlineRevenue = await Sale.sum('totalAmount', { where: { ...branchFilter, orderType: 'offline' } });
+
     const todayOrders = await Sale.count({
       where: { ...branchFilter, createdAt: dateFilter }
+    });
+    
+    const todayOnlineOrders = await Sale.count({
+      where: { ...branchFilter, createdAt: dateFilter, orderType: 'online' }
+    });
+    
+    const todayOfflineOrders = await Sale.count({
+      where: { ...branchFilter, createdAt: dateFilter, orderType: 'offline' }
     });
 
     const allProducts = await Product.findAll({ attributes: ['costPrice', 'stock'], raw: true });
@@ -163,7 +174,11 @@ exports.getOwnerDashboard = async (req, res) => {
     return successResponse(res, 200, 'Owner dashboard stats', {
       totalRevenue: totalRevenue || 0,
       todayRevenue: todayRevenue || 0,
+      onlineRevenue: onlineRevenue || 0,
+      offlineRevenue: offlineRevenue || 0,
       todayOrders: todayOrders || 0,
+      todayOnlineOrders: todayOnlineOrders || 0,
+      todayOfflineOrders: todayOfflineOrders || 0,
       totalPurchases: totalPurchases || 0,
       activeProducts,
       lowStockProducts,

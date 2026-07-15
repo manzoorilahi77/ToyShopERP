@@ -55,7 +55,9 @@ export default function Dashboard() {
       try {
         const res = await getOwnerDashboard({ branchId: branch, period });
         setDashboardStats(res.data || {
-          totalRevenue: 0, todayRevenue: 0, todayOrders: 0, totalPurchases: 0, activeProducts: 0, lowStockProducts: 0, revenueData: [], salesData: []
+          totalRevenue: 0, todayRevenue: 0, todayOrders: 0, 
+          onlineRevenue: 0, offlineRevenue: 0, todayOnlineOrders: 0, todayOfflineOrders: 0,
+          totalPurchases: 0, activeProducts: 0, lowStockProducts: 0, revenueData: [], salesData: []
         });
       } catch (error) {
         toast.error('Failed to load dashboard data');
@@ -66,7 +68,11 @@ export default function Dashboard() {
 
   const currentData = {
     revenue: `₹${(dashboardStats.todayRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
+    onlineRevenue: `₹${(dashboardStats.onlineRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
+    offlineRevenue: `₹${(dashboardStats.offlineRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
     orders: dashboardStats.todayOrders || 0,
+    onlineOrders: dashboardStats.todayOnlineOrders || 0,
+    offlineOrders: dashboardStats.todayOfflineOrders || 0,
     purchases: `₹${(dashboardStats.totalPurchases || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
     alerts: dashboardStats.lowStockProducts,
     revenueData: dashboardStats.revenueData?.length ? dashboardStats.revenueData : [
@@ -125,7 +131,7 @@ export default function Dashboard() {
           className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6"
         >
           <KpiCard 
-            title="Revenue" 
+            title="Total Revenue (Today)" 
             value={currentData.revenue} 
             icon={DollarSign} 
             trend="up" 
@@ -133,11 +139,27 @@ export default function Dashboard() {
             colorClass="bg-blue-100 text-blue-600"
           />
           <KpiCard 
-            title="Orders" 
+            title="Online Revenue" 
+            value={currentData.onlineRevenue} 
+            icon={DollarSign} 
+            trend="up" 
+            trendValue="Online" 
+            colorClass="bg-indigo-100 text-indigo-600"
+          />
+          <KpiCard 
+            title="Offline Revenue" 
+            value={currentData.offlineRevenue} 
+            icon={DollarSign} 
+            trend="up" 
+            trendValue="Store" 
+            colorClass="bg-emerald-100 text-emerald-600"
+          />
+          <KpiCard 
+            title="Total Orders" 
             value={currentData.orders} 
             icon={ShoppingCart} 
             trend="up" 
-            trendValue="8.2%" 
+            trendValue={`${currentData.onlineOrders} Online`} 
             colorClass="bg-green-100 text-green-600"
           />
           <KpiCard 

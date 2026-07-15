@@ -21,7 +21,9 @@ const gstRoutes = require('./routes/gstRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const superAdminRoutes = require('./routes/superAdminRoutes');
-
+const customerRoutes = require('./routes/customerRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const onlineOrderRoutes = require('./routes/onlineOrderRoutes');
 const app = express();
 
 // Middlewares
@@ -48,6 +50,11 @@ app.use('/api/v1/gst-registrations', gstRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/superadmin', superAdminRoutes);
+
+// Customer Facing APIs
+app.use('/api/v1/customers', customerRoutes);
+app.use('/api/v1/cart', cartRoutes);
+app.use('/api/v1/online-orders', onlineOrderRoutes);
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
