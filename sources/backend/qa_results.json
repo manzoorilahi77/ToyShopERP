@@ -1,8 +1,8 @@
 {
   "modulesTested": 10,
   "totalTests": 14,
-  "passed": 11,
-  "failed": 3,
+  "passed": 14,
+  "failed": 0,
   "tests": [
     {
       "id": "TC_DASHBOARD_001",
@@ -11,11 +11,11 @@
       "method": "GET",
       "endpoint": "/dashboard/overview?period=month",
       "expectedCode": 200,
-      "actualCode": 404,
-      "status": "Fail",
-      "latency": 23,
-      "remarks": "Failed to fetch",
-      "responseBody": "{\"success\":false,\"message\":\"API endpoint not found\",\"errors\":[]}"
+      "actualCode": 200,
+      "status": "Pass",
+      "latency": 77,
+      "remarks": "Successfully fetched",
+      "responseBody": "{\"success\":true,\"message\":\"Dashboard overview retrieved successfully\",\"data\":{\"Total Sales\":18,\"Tota"
     },
     {
       "id": "TC_DASHBOARD_002",
@@ -24,11 +24,11 @@
       "method": "GET",
       "endpoint": "/dashboard/recent-activities",
       "expectedCode": 200,
-      "actualCode": 404,
-      "status": "Fail",
-      "latency": 3,
-      "remarks": "Failed to fetch",
-      "responseBody": "{\"success\":false,\"message\":\"API endpoint not found\",\"errors\":[]}"
+      "actualCode": 200,
+      "status": "Pass",
+      "latency": 33,
+      "remarks": "Successfully fetched",
+      "responseBody": "{\"success\":true,\"message\":\"Recent activities retrieved successfully\",\"data\":[{\"type\":\"Sale\",\"descrip"
     },
     {
       "id": "TC_PRODUCTS_003",
@@ -39,7 +39,7 @@
       "expectedCode": 200,
       "actualCode": 200,
       "status": "Pass",
-      "latency": 32,
+      "latency": 11,
       "remarks": "Successfully fetched",
       "responseBody": "{\"success\":true,\"message\":\"Products retrieved successfully\",\"data\":[{\"id\":1,\"name\":\"Superhero Action"
     },
@@ -50,11 +50,11 @@
       "method": "GET",
       "endpoint": "/products/low-stock",
       "expectedCode": 200,
-      "actualCode": 404,
-      "status": "Fail",
-      "latency": 8,
-      "remarks": "Failed to fetch",
-      "responseBody": "{\"success\":false,\"message\":\"Product not found\",\"errors\":[]}"
+      "actualCode": 200,
+      "status": "Pass",
+      "latency": 6,
+      "remarks": "Successfully fetched",
+      "responseBody": "{\"success\":true,\"message\":\"Low stock products retrieved successfully\",\"data\":[]}"
     },
     {
       "id": "TC_CATEGORIES_005",
@@ -78,7 +78,7 @@
       "expectedCode": 200,
       "actualCode": 200,
       "status": "Pass",
-      "latency": 5,
+      "latency": 6,
       "remarks": "Successfully fetched",
       "responseBody": "{\"success\":true,\"message\":\"Branches retrieved successfully\",\"data\":[{\"id\":1,\"name\":\"Downtown Store\","
     },
@@ -91,7 +91,7 @@
       "expectedCode": 200,
       "actualCode": 200,
       "status": "Pass",
-      "latency": 22,
+      "latency": 16,
       "remarks": "Successfully fetched",
       "responseBody": "{\"success\":true,\"message\":\"Sales retrieved successfully\",\"data\":[{\"id\":18,\"invoiceNumber\":\"INV-20260"
     },
@@ -104,7 +104,7 @@
       "expectedCode": 200,
       "actualCode": 200,
       "status": "Pass",
-      "latency": 15,
+      "latency": 11,
       "remarks": "Successfully fetched",
       "responseBody": "{\"success\":true,\"message\":\"Purchases retrieved successfully\",\"data\":[{\"id\":2,\"totalAmount\":\"9980.00\""
     },
@@ -117,7 +117,7 @@
       "expectedCode": 200,
       "actualCode": 200,
       "status": "Pass",
-      "latency": 6,
+      "latency": 4,
       "remarks": "Successfully fetched",
       "responseBody": "{\"success\":true,\"message\":\"Suppliers retrieved successfully\",\"data\":[]}"
     },
@@ -143,7 +143,7 @@
       "expectedCode": 200,
       "actualCode": 200,
       "status": "Pass",
-      "latency": 8,
+      "latency": 9,
       "remarks": "Successfully fetched",
       "responseBody": "{\"success\":true,\"message\":\"Users retrieved successfully\",\"data\":[{\"id\":1,\"name\":\"Admin\",\"email\":\"adm"
     },
@@ -156,7 +156,7 @@
       "expectedCode": 200,
       "actualCode": 200,
       "status": "Pass",
-      "latency": 4,
+      "latency": 5,
       "remarks": "Successfully fetched",
       "responseBody": "{\"success\":true,\"message\":\"Notifications retrieved successfully\",\"data\":[]}"
     },

@@ -1,6 +1,7 @@
 const { Sale, SaleItem, Product, User, Purchase, Notification, sequelize } = require('../models');
 const { successResponse, errorResponse } = require('../utils/response');
 const { Op } = require('sequelize');
+const dashboardService = require('../services/dashboardService');
 
 exports.getOwnerDashboard = async (req, res) => {
   try {
@@ -211,5 +212,25 @@ exports.getStaffDashboard = async (req, res) => {
     });
   } catch (error) {
     return errorResponse(res, 500, 'Error loading staff dashboard', [error.message]);
+  }
+};
+
+exports.getDashboardOverview = async (req, res) => {
+  try {
+    const period = req.query.period || 'today';
+    const stats = await dashboardService.getOverviewStats(period);
+    
+    return successResponse(res, 200, 'Dashboard overview retrieved successfully', stats);
+  } catch (error) {
+    return errorResponse(res, 500, 'Error retrieving dashboard overview', [error.message]);
+  }
+};
+
+exports.getRecentActivities = async (req, res) => {
+  try {
+    const activities = await dashboardService.getRecentActivities();
+    return successResponse(res, 200, 'Recent activities retrieved successfully', activities);
+  } catch (error) {
+    return errorResponse(res, 500, 'Error retrieving recent activities', [error.message]);
   }
 };

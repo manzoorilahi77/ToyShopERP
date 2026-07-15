@@ -1,5 +1,6 @@
 const { Product, Category } = require('../models');
 const { successResponse, errorResponse } = require('../utils/response');
+const productService = require('../services/productService');
 
 exports.getAllProducts = async (req, res) => {
   try {
@@ -117,5 +118,14 @@ exports.toggleFavorite = async (req, res) => {
     return successResponse(res, 200, 'Product favorite status updated', product);
   } catch (error) {
     return errorResponse(res, 500, 'Error updating favorite status', [error.message]);
+  }
+};
+
+exports.getLowStockProducts = async (req, res) => {
+  try {
+    const products = await productService.getLowStockProducts();
+    return successResponse(res, 200, 'Low stock products retrieved successfully', products);
+  } catch (error) {
+    return errorResponse(res, 500, 'Error retrieving low stock products', [error.message]);
   }
 };

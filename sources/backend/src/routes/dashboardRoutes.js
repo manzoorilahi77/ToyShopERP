@@ -8,4 +8,8 @@ router.use(authenticate);
 router.get('/owner', authorize('Super Admin', 'Owner', 'Manager'), dashboardController.getOwnerDashboard);
 router.get('/staff', authorize('Staff'), dashboardController.getStaffDashboard);
 
+// New endpoints for resolving bug 001 and 002
+router.get('/overview', dashboardController.getDashboardOverview);
+router.get('/recent-activities', dashboardController.getRecentActivities);
+
 module.exports = router;
