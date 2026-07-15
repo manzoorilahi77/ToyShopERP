@@ -21,7 +21,7 @@ const Sale = sequelize.define('Sale', {
     defaultValue: 'cash',
   },
   status: {
-    type: DataTypes.ENUM('completed', 'refunded', 'failed'),
+    type: DataTypes.ENUM('pending', 'completed', 'refunded', 'failed'),
     defaultValue: 'completed',
   },
   customerId: {

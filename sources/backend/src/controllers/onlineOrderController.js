@@ -55,11 +55,10 @@ const placeOrder = async (req, res) => {
         productId: item.productId,
         quantity: item.quantity,
         unitPrice: item.product.price,
-        totalPrice: itemTotal,
-        discount: 0,
-        cgstAmount: cgst,
-        sgstAmount: sgst,
-        igstAmount: 0,
+        subTotal: itemTotal + cgst + sgst,
+        gstPercent: 18,
+        gstAmount: cgst + sgst,
+        taxableAmount: itemTotal,
       });
 
       // Reduce stock
@@ -111,9 +110,9 @@ const placeOrder = async (req, res) => {
     await transaction.commit();
     return successResponse(res, 201, 'Order placed successfully', sale);
   } catch (error) {
-    await transaction.rollback();
+    if (transaction) await transaction.rollback();
     console.error('Place order error:', error);
-    return errorResponse(res, 500, 'Internal server error');
+    return errorResponse(res, 500, error.message || 'Internal server error', error.stack);
   }
 };
 
@@ -129,7 +128,7 @@ const getOrderHistory = async (req, res) => {
     return successResponse(res, 200, 'Orders retrieved', orders);
   } catch (error) {
     console.error('Get order history error:', error);
-    return errorResponse(res, 500, 'Internal server error');
+    return errorResponse(res, 500, error.message || 'Internal server error', error.stack);
   }
 };
 
