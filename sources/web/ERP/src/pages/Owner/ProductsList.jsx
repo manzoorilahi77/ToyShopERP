@@ -15,7 +15,9 @@ const productSchema = z.object({
   sku: z.string().min(2, 'SKU is required'),
   categoryId: z.number().min(1, 'Category is required'),
   price: z.number().min(0, 'Price must be positive'),
-  stock: z.number()
+  stock: z.number(),
+  hsnCode: z.string().optional(),
+  gstRate: z.number().min(0, 'GST Rate must be positive').optional()
 });
 
 
@@ -43,7 +45,7 @@ export default function ProductsList() {
     }
   }, []);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(productSchema)
   });
 
@@ -70,10 +72,12 @@ export default function ProductsList() {
     setEditingProduct(product);
     reset({
       name: product.name,
-      sku: product.sku,
+      sku: product.sku || (product.id ? `TY-${product.id.toString().padStart(3, '0')}` : `TY-${Math.floor(100000 + Math.random() * 900000)}`),
       categoryId: product.categoryId,
       price: product.price,
       stock: 0,
+      hsnCode: product.hsnCode || '',
+      gstRate: product.gstRate || 0,
     });
     setIsModalOpen(true);
   }, [reset]);
@@ -228,7 +232,16 @@ export default function ProductsList() {
               {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">SKU</label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-medium text-slate-700">SKU</label>
+                <button 
+                  type="button" 
+                  onClick={() => setValue('sku', `TY-${Math.floor(100000 + Math.random() * 900000)}`)}
+                  className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  Auto-generate
+                </button>
+              </div>
               <input {...register('sku')} className="input-field" placeholder="e.g. TY-100" />
               {errors.sku && <p className="mt-1 text-xs text-red-500">{errors.sku.message}</p>}
             </div>
@@ -241,6 +254,22 @@ export default function ProductsList() {
                 ))}
               </select>
               {errors.categoryId && <p className="mt-1 text-xs text-red-500">{errors.categoryId.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">HSN Code</label>
+              <input {...register('hsnCode')} className="input-field" placeholder="e.g. 9503" />
+              {errors.hsnCode && <p className="mt-1 text-xs text-red-500">{errors.hsnCode.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">GST Rate (%)</label>
+              <input 
+                type="number" 
+                step="0.01"
+                {...register('gstRate', { valueAsNumber: true })} 
+                className="input-field" 
+                placeholder="0" 
+              />
+              {errors.gstRate && <p className="mt-1 text-xs text-red-500">{errors.gstRate.message}</p>}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

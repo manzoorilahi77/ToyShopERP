@@ -26,6 +26,15 @@ const Product = sequelize.define('Product', {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+  hsnCode: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  gstRate: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
 }, {
   paranoid: true,
 });

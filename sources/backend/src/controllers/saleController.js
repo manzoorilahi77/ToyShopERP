@@ -65,6 +65,11 @@ exports.createSale = async (req, res) => {
     const userId = req.user.id;
 
     let totalAmount = 0;
+    let subtotal = 0;
+    let totalCgst = 0;
+    let totalSgst = 0;
+    let totalIgst = 0;
+    let totalTaxableAmount = 0;
     const saleItemsData = [];
     let totalItems = 0;
 
@@ -78,15 +83,28 @@ exports.createSale = async (req, res) => {
         throw new Error(`Insufficient stock for product ${product.name}`);
       }
 
-      const subTotal = product.price * item.quantity;
-      totalAmount += subTotal;
-      totalItems += item.quantity;
+      const priceToUse = item.unitPrice !== undefined ? Number(item.unitPrice) : product.price;
+      const itemTaxableAmount = priceToUse * item.quantity;
+      const rate = Number(product.gstRate || 18);
+      const itemGstAmount = itemTaxableAmount * (rate / 100);
+      const itemCgst = itemGstAmount / 2;
+      const itemSgst = itemGstAmount / 2;
+      
+      const itemTotal = itemTaxableAmount + itemGstAmount;
+
+      totalTaxableAmount += itemTaxableAmount;
+      totalCgst += itemCgst;
+      totalSgst += itemSgst;
+      totalAmount += itemTotal;
 
       saleItemsData.push({
         productId: product.id,
         quantity: item.quantity,
-        unitPrice: product.price,
-        subTotal,
+        unitPrice: priceToUse,
+        subTotal: itemTotal,
+        gstPercent: rate,
+        gstAmount: itemGstAmount,
+        taxableAmount: itemTaxableAmount,
       });
 
       // Deduct stock
@@ -103,6 +121,11 @@ exports.createSale = async (req, res) => {
       invoiceNumber,
       branchId,
       userId,
+      subtotal: totalTaxableAmount,
+      cgst: totalCgst,
+      sgst: totalSgst,
+      igst: 0,
+      taxableAmount: totalTaxableAmount,
       totalAmount,
       customerMobile,
       paymentMethod,

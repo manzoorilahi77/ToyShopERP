@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LineChart, TrendingUp, TrendingDown, 
   Package, Users, AlertTriangle, FileText, 
-  IndianRupee, ChevronDown, Award, Loader2
+  IndianRupee, ChevronDown, Award, Loader2, Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
+import * as XLSX from 'xlsx';
 
 const PERIODS = ['Today', 'Yesterday', 'Last 7 Days', 'This Month'];
 
@@ -258,6 +259,60 @@ export default function Reports() {
     );
   }
 
+  const generateExcelReport = () => {
+    // 1. Stock List Sheet
+    const stockData = products.map(p => ({
+      'Product Name': p.name,
+      'Current Stock': p.stock,
+      'Min Stock': p.minStock || 10,
+      'Status': p.stock <= (p.minStock || 10) ? 'Low Stock' : 'Healthy',
+      'Price': p.price,
+      'Added On': new Date(p.createdAt).toLocaleDateString()
+    }));
+
+    // 2. Sales Sheet
+    const salesData = currentSales.map(s => ({
+      'Order ID': s.id,
+      'Date': new Date(s.createdAt).toLocaleString(),
+      'Staff': s.user?.name || 'Unknown',
+      'Branch': branches.find(b => b.id === s.branchId)?.name || 'Unknown',
+      'Items': s.items?.length || 0,
+      'Total Amount': Number(s.totalAmount)
+    }));
+
+    // 3. Top Salesman
+    const staffData = Object.values(staffSalesMap).map(st => ({
+      'Staff Name': st.name,
+      'Total Sales Amount': st.sales,
+      'Points Earned': st.points
+    })).sort((a, b) => b['Total Sales Amount'] - a['Total Sales Amount']);
+
+    // 4. Top Products
+    const productsSalesData = Object.values(productSalesMap).map(ps => ({
+      'Product Name': ps.name,
+      'Quantity Sold': ps.qty,
+      'Revenue Generated': ps.revenue
+    })).sort((a, b) => b['Revenue Generated'] - a['Revenue Generated']);
+
+    // 5. Financial Summary
+    const financialData = [
+      { Metric: 'Total Revenue', Value: currentSummary.revenue },
+      { Metric: 'Total Orders', Value: currentSummary.orders },
+      { Metric: 'Average Order Value', Value: currentSummary.avgValue },
+      { Metric: 'Estimated Tax (GST 18%)', Value: currentSummary.tax },
+      { Metric: 'Growth Trend (%)', Value: currentSummary.trend }
+    ];
+
+    const wb = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stockData), 'Stock List');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesData), 'Sales');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(staffData), 'Staff Performance');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(productsSalesData), 'Product Performance');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(financialData), 'Financial Summary');
+    XLSX.writeFile(wb, `Business_Report_${period.replace(/ /g, '_')}_${branchFilter.replace(/ /g, '_')}.xlsx`);
+  };
+
   return (
     <div className="max-w-7xl mx-auto pb-24">
       {/* Header & Filters */}
@@ -294,6 +349,14 @@ export default function Reports() {
               </button>
             ))}
           </div>
+
+          <button
+            onClick={generateExcelReport}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold whitespace-nowrap shadow-sm"
+          >
+            <Download className="w-4 h-4" />
+            Generate Report
+          </button>
         </div>
       </div>
 

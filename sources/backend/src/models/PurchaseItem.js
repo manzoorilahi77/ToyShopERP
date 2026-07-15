@@ -11,6 +11,21 @@ const PurchaseItem = sequelize.define('PurchaseItem', {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
   },
+  gstPercent: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
+  gstAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
+  taxableAmount: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
 }, {
   paranoid: true,
 });

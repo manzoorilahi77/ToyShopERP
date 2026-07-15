@@ -13,6 +13,7 @@ const GstRegistration = require('./GstRegistration');
 const Notification = require('./Notification');
 const Badge = require('./Badge');
 const UserBadge = require('./UserBadge');
+const GstRate = require('./GstRate');
 
 // Setup Associations
 
@@ -88,4 +89,5 @@ module.exports = {
   Notification,
   Badge,
   UserBadge,
+  GstRate,
 };

@@ -11,6 +11,31 @@ const Purchase = sequelize.define('Purchase', {
     type: DataTypes.ENUM('completed', 'pending', 'cancelled'),
     defaultValue: 'completed',
   },
+  subtotal: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
+  cgst: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
+  sgst: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
+  igst: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
+  taxableAmount: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
 }, {
   paranoid: true,
 });

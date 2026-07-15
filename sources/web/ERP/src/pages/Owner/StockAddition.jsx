@@ -21,6 +21,8 @@ export default function StockAddition() {
   const [quantity, setQuantity] = useState('100');
   const [colorTag, setColorTag] = useState(STOCK_COLOR_TAGS[0]);
   const [categoryId, setCategoryId] = useState('');
+  const [hsnCode, setHsnCode] = useState('');
+  const [gstRate, setGstRate] = useState('0');
   const [categories, setCategories] = useState([]);
   const [saving, setSaving] = useState(false);
   const [image, setImage] = useState(null);
@@ -54,6 +56,8 @@ export default function StockAddition() {
       formData.append('categoryId', categoryId);
       formData.append('price', price);
       formData.append('stock', quantity);
+      formData.append('hsnCode', hsnCode);
+      formData.append('gstRate', gstRate);
       if (image) {
         formData.append('image', image);
       }
@@ -68,6 +72,8 @@ export default function StockAddition() {
       setCompany('');
       setQuantity('100');
       setCategoryId('');
+      setHsnCode('');
+      setGstRate('0');
       setColorTag(STOCK_COLOR_TAGS[0]);
       setImage(null);
     } catch (error) {
@@ -126,6 +132,30 @@ export default function StockAddition() {
                   onChange={(e) => setPrice(e.target.value)}
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">HSN Code</label>
+              <input 
+                type="text" 
+                placeholder="e.g. 9503"
+                className="input-field w-full"
+                value={hsnCode}
+                onChange={(e) => setHsnCode(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">GST Rate *</label>
+              <select 
+                className="input-field w-full"
+                value={gstRate}
+                onChange={(e) => setGstRate(e.target.value)}
+              >
+                <option value="0">0%</option>
+                <option value="5">5%</option>
+                <option value="12">12%</option>
+                <option value="18">18%</option>
+                <option value="28">28%</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">Product Image</label>

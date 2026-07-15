@@ -11,6 +11,8 @@ import ProductsList from './pages/Owner/ProductsList'; // Using this for Catalog
 import BranchesManagement from './pages/Owner/BranchesManagement';
 import StaffManagement from './pages/Owner/StaffManagement';
 import GstRegistrations from './pages/Owner/GstRegistrations';
+import GstDashboard from './pages/Owner/GstDashboard';
+import GstReports from './pages/Owner/GstReports';
 import Notifications from './pages/Owner/Notifications';
 import Settings from './pages/Owner/Settings';
 
@@ -49,6 +51,8 @@ const App = () => {
               <Route path="branches" element={<BranchesManagement />} />
               <Route path="staff" element={<StaffManagement />} />
               <Route path="gst" element={<GstRegistrations />} />
+              <Route path="gst-dashboard" element={<GstDashboard />} />
+              <Route path="gst-reports" element={<GstReports />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="settings" element={<Settings />} />
             </Route>

@@ -35,29 +35,29 @@ export default function TenantsManagement() {
     <div className="max-w-7xl mx-auto pb-24">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white font-heading">Tenants Management</h1>
-          <p className="text-slate-400 mt-2">Manage all registered shops and owners.</p>
+          <h1 className="text-3xl font-bold text-gray-900 font-heading">Tenants Management</h1>
+          <p className="text-gray-500 mt-2">Manage all registered shops and owners.</p>
         </div>
-        <button className="bg-primary-500 hover:bg-primary-400 text-white font-bold py-2.5 px-6 rounded-xl flex items-center transition-colors shadow-lg shadow-primary-500/20">
+        <button className="bg-primary-500 hover:bg-primary-600 text-white font-bold py-2.5 px-6 rounded-xl flex items-center transition-colors shadow-lg shadow-primary-500/20">
           <Plus className="w-5 h-5 mr-2" />
           Add Tenant
         </button>
       </div>
 
-      <div className="bg-slate-800 rounded-2xl border border-slate-700/50 shadow-lg overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         {/* Toolbar */}
-        <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex gap-4">
+        <div className="p-4 border-b border-gray-200 bg-gray-50 flex gap-4">
           <div className="relative flex-1 max-w-md">
-            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input 
               type="text" 
               placeholder="Search tenants by name or ID..."
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2 text-slate-200 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
+              className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-2 text-gray-900 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors placeholder-gray-400"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <select className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-slate-200 focus:outline-none focus:border-primary-500">
+          <select className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-gray-700 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
             <option>All Plans</option>
             <option>Starter</option>
             <option>Pro</option>
@@ -68,13 +68,13 @@ export default function TenantsManagement() {
         {/* Table */}
         <div className="overflow-x-auto min-h-[200px] relative">
           {loading ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-800/50">
+            <div className="absolute inset-0 flex items-center justify-center bg-white/50">
               <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-900/50 text-slate-400 text-sm uppercase tracking-wider">
+                <tr className="bg-gray-50 text-gray-500 text-sm uppercase tracking-wider">
                   <th className="p-4 font-semibold">Tenant Name</th>
                   <th className="p-4 font-semibold">Owner</th>
                   <th className="p-4 font-semibold">Plan</th>
@@ -84,29 +84,29 @@ export default function TenantsManagement() {
                   <th className="p-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/50 text-slate-300">
+              <tbody className="divide-y divide-gray-100 text-gray-700">
                 {filteredTenants.map((tenant, idx) => (
                   <motion.tr 
                     key={tenant.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="hover:bg-slate-700/30 transition-colors group"
+                    className="hover:bg-gray-50 transition-colors group"
                   >
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-primary-400">
+                        <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600">
                           <Store className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="font-bold text-white">{tenant.name}</p>
-                          <p className="text-xs text-slate-500">ID: {tenant.id}</p>
+                          <p className="font-bold text-gray-900">{tenant.name}</p>
+                          <p className="text-xs text-gray-500">ID: {tenant.id}</p>
                         </div>
                       </div>
                     </td>
                     <td className="p-4 font-medium">{tenant.owner}</td>
                     <td className="p-4">
-                      <span className="bg-slate-900 px-3 py-1 rounded-md text-sm border border-slate-700 text-slate-300">
+                      <span className="bg-gray-100 px-3 py-1 rounded-md text-sm border border-gray-200 text-gray-700">
                         {tenant.plan}
                       </span>
                     </td>
@@ -114,14 +114,14 @@ export default function TenantsManagement() {
                     <td className="p-4 font-mono">{tenant.revenue}</td>
                     <td className="p-4">
                       <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full ${
-                        tenant.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                        tenant.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
                       }`}>
                         {tenant.status === 'Active' ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <ShieldAlert className="w-3 h-3 mr-1" />}
                         {tenant.status}
                       </span>
                     </td>
                     <td className="p-4 text-right">
-                      <button className="p-2 text-slate-500 hover:text-white hover:bg-slate-700 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+                      <button className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
                         <MoreVertical className="w-5 h-5" />
                       </button>
                     </td>
@@ -129,7 +129,7 @@ export default function TenantsManagement() {
                 ))}
                 {!loading && filteredTenants.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="p-8 text-center text-slate-500">
+                    <td colSpan="7" className="p-8 text-center text-gray-500">
                       No tenants found.
                     </td>
                   </tr>

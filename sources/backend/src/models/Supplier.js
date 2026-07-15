@@ -16,6 +16,18 @@ const Supplier = sequelize.define('Supplier', {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+  state: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  stateCode: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  gstVerificationStatus: {
+    type: DataTypes.ENUM('verified', 'pending', 'failed', 'not_applicable'),
+    defaultValue: 'pending',
+  },
 }, {
   paranoid: true,
 });

@@ -105,7 +105,10 @@ export default function NewSale() {
   };
 
   const subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
-  const tax = subtotal * 0.18; // 18% GST
+  const tax = cart.reduce((sum, item) => {
+    const rate = Number(item.product.gstRate || 18); // fallback to 18 if not set
+    return sum + (item.unitPrice * item.quantity * (rate / 100));
+  }, 0);
   const total = subtotal + tax;
 
   const handleCheckout = async () => {
@@ -122,7 +125,8 @@ export default function NewSale() {
       customerMobile: customerMobile,
       items: cart.map(item => ({
         productId: item.product.id,
-        quantity: item.quantity
+        quantity: item.quantity,
+        unitPrice: item.unitPrice
       }))
     };
 
@@ -421,7 +425,7 @@ export default function NewSale() {
               <span>₹{subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm text-slate-500">
-              <span>GST (18%)</span>
+              <span>Total GST</span>
               <span>₹{tax.toFixed(2)}</span>
             </div>
             <div className="border-t border-slate-100 pt-2 flex justify-between items-end">
@@ -500,7 +504,7 @@ export default function NewSale() {
                       <span>₹{lastOrder.subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-slate-500">
-                      <span>GST (18%)</span>
+                      <span>Total GST</span>
                       <span>₹{lastOrder.tax.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-end mt-2 pt-2 border-t border-slate-100">
@@ -572,7 +576,7 @@ export default function NewSale() {
               <span>₹{lastOrder.subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between py-1">
-              <span>GST (18%):</span>
+              <span>Total GST:</span>
               <span>₹{lastOrder.tax.toFixed(2)}</span>
             </div>
             <div className="flex justify-between py-2 font-bold text-xl border-t-2 border-gray-300 mt-2">

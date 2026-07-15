@@ -37,21 +37,44 @@ exports.getTenants = async (req, res) => {
       ]
     });
 
-    const tenants = branches.map(branch => {
+    const tenantsMap = {};
+
+    branches.forEach(branch => {
       // Find the first user with 'Owner' or 'Admin' role, or just pick first user
       const ownerUser = branch.users.find(u => u.role && (u.role.name === 'Owner' || u.role.name === 'Admin')) || branch.users[0];
+      const ownerName = ownerUser ? ownerUser.name : 'Unassigned';
+      
       const revenue = branch.sales.reduce((sum, s) => sum + Number(s.totalAmount || 0), 0);
 
-      return {
-        id: `T${branch.id.toString().padStart(3, '0')}`,
-        name: branch.name,
-        owner: ownerUser ? ownerUser.name : 'Unassigned',
-        plan: 'Pro', // Static for now
-        status: branch.isActive ? 'Active' : 'Inactive',
-        branches: 1,
-        revenue: `₹${revenue.toLocaleString()}/mo`
-      };
+      if (!tenantsMap[ownerName]) {
+        tenantsMap[ownerName] = {
+          id: `T${branch.id.toString().padStart(3, '0')}`,
+          name: ownerName === 'Unassigned' ? branch.name : `${ownerName}'s Shop`,
+          owner: ownerName,
+          plan: 'Pro', // Static for now
+          status: branch.isActive ? 'Active' : 'Inactive',
+          branches: 0,
+          rawRevenue: 0
+        };
+      }
+
+      tenantsMap[ownerName].branches += 1;
+      tenantsMap[ownerName].rawRevenue += revenue;
+      // If any branch is active, the tenant is active
+      if (branch.isActive) {
+        tenantsMap[ownerName].status = 'Active';
+      }
     });
+
+    const tenants = Object.values(tenantsMap).map(tenant => ({
+      id: tenant.id,
+      name: tenant.name,
+      owner: tenant.owner,
+      plan: tenant.plan,
+      status: tenant.status,
+      branches: tenant.branches,
+      revenue: `₹${tenant.rawRevenue.toLocaleString()}/mo`
+    }));
 
     return successResponse(res, 200, 'Tenants retrieved', tenants);
   } catch (error) {

@@ -24,6 +24,31 @@ const Sale = sequelize.define('Sale', {
     type: DataTypes.ENUM('completed', 'refunded', 'failed'),
     defaultValue: 'completed',
   },
+  subtotal: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
+  cgst: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
+  sgst: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
+  igst: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
+  taxableAmount: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    defaultValue: 0,
+  },
 }, {
   paranoid: true,
 });
