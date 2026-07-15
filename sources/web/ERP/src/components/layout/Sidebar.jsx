@@ -14,8 +14,8 @@ export default function Sidebar({ items, title = "ToyShop ERP", basePath = "" })
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col h-full shadow-sm z-20 relative">
-      <div className="h-16 flex items-center px-6 border-b border-slate-200">
+    <aside className="w-64 bg-white/90 backdrop-blur-xl border-r border-slate-100 hidden md:flex flex-col h-full shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20 relative">
+      <div className="h-16 flex items-center px-6 border-b border-slate-100/80">
         <div className="flex items-center gap-2 text-primary-600">
           <ToyBrick className="w-8 h-8" />
           <h1 className="text-xl font-heading font-bold tracking-tight truncate">{title}</h1>
@@ -29,10 +29,10 @@ export default function Sidebar({ items, title = "ToyShop ERP", basePath = "" })
             to={item.path}
             end={item.path === basePath}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative ${
                 isActive 
-                  ? 'text-primary-700 bg-primary-50 font-medium' 
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  ? 'text-primary-700 bg-primary-50/80 font-medium shadow-sm' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
               }`
             }
           >
@@ -54,10 +54,10 @@ export default function Sidebar({ items, title = "ToyShop ERP", basePath = "" })
         ))}
       </div>
 
-      <div className="p-4 border-t border-slate-200">
+      <div className="p-4 border-t border-slate-100/80">
         <button 
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 px-3 py-2.5 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          className="flex w-full items-center gap-3 px-3 py-2.5 text-slate-500 hover:text-red-600 hover:bg-red-50/80 rounded-xl transition-colors duration-300 group"
         >
           <LogOut className="w-5 h-5" />
           <span>Logout</span>

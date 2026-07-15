@@ -207,7 +207,7 @@ export default function StaffManagement() {
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
-              className="bg-white rounded-3xl shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col"
+              className="card border-0 shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col"
             >
               <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
                 <h2 className="text-2xl font-bold text-slate-800 font-heading">Add Staff Member</h2>

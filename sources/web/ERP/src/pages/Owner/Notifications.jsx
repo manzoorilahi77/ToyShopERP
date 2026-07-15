@@ -108,10 +108,10 @@ export default function Notifications() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   onClick={() => markAsRead(notif.id, notif.isRead)}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                  className={`card p-4 transition-all cursor-pointer ${
                     notif.isRead 
-                      ? 'bg-white border-slate-200' 
-                      : 'bg-white border-primary/20 shadow-[0_0_15px_-3px_rgba(var(--primary-rgb),0.1)]'
+                      ? 'border-slate-100 opacity-80' 
+                      : 'border-primary-200 shadow-md ring-1 ring-primary-100'
                   }`}
                 >
                   <div className="flex gap-4">

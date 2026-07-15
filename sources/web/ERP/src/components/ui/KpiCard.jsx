@@ -7,8 +7,8 @@ export default function KpiCard({ title, value, icon: Icon, trend, trendValue, c
 
   return (
     <motion.div 
-      whileHover={{ y: -4 }}
-      className="card p-6 flex flex-col justify-between"
+      whileHover={{ y: -2, boxShadow: '0 12px 32px -8px rgba(0,0,0,0.08)' }}
+      className="card p-6 flex flex-col justify-between h-full"
     >
       <div className="flex justify-between items-start">
         <div>

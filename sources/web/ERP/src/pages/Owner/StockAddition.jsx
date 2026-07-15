@@ -240,7 +240,7 @@ export default function StockAddition() {
       </div>
 
       {/* Bottom Bar matching mobile */}
-      <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 bg-white border-t border-slate-200 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <div className="fixed bottom-0 left-0 md:left-64 right-0 p-4 glass-panel border-t-0 border-b-0 border-x-0 z-10">
         <div className="max-w-3xl mx-auto">
           <button 
             onClick={handleSave}

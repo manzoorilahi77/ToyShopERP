@@ -34,9 +34,9 @@ export default function DataTable({ data, columns, title, filters }) {
   });
 
   return (
-    <div className="card flex flex-col overflow-hidden">
+    <div className="card flex flex-col overflow-hidden border-0">
       {/* Toolbar */}
-      <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         {title && <h3 className="text-lg font-semibold text-slate-800">{title}</h3>}
         
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -58,8 +58,8 @@ export default function DataTable({ data, columns, title, filters }) {
               Filter
             </button>
             {isFilterOpen && filters && filters.length > 0 && (
-              <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-lg shadow-xl z-50 p-4">
-                <h4 className="text-sm font-semibold text-slate-800 mb-3">Filters</h4>
+              <div className="absolute right-0 mt-2 w-64 bg-white/90 backdrop-blur-xl border border-slate-100 rounded-2xl shadow-glass z-50 p-4">
+                <h4 className="text-sm font-semibold text-slate-800 mb-3 font-heading">Filters</h4>
                 <div className="space-y-4">
                   {filters.map(filter => {
                     const activeFilter = columnFilters.find(f => f.id === filter.id);
@@ -109,7 +109,7 @@ export default function DataTable({ data, columns, title, filters }) {
       {/* Table Area */}
       <div className="overflow-x-auto w-full">
         <table className="w-full text-sm text-left">
-          <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+          <thead className="text-xs text-slate-500 uppercase bg-slate-50/50 border-b border-slate-100">
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
@@ -163,7 +163,7 @@ export default function DataTable({ data, columns, title, filters }) {
       </div>
 
       {/* Pagination */}
-      <div className="p-4 border-t border-slate-200 flex items-center justify-between bg-slate-50/50">
+      <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
         <div className="text-sm text-slate-500">
           Showing {table.getRowModel().rows.length > 0 ? table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1 : 0} to {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} of {table.getFilteredRowModel().rows.length} entries
         </div>

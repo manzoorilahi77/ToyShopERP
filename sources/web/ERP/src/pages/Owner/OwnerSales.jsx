@@ -37,8 +37,8 @@ function ReceiptModal({ sale, onClose }) {
   const saleDate = new Date(sale.createdAt);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="card border-0 shadow-2xl w-full max-w-md animate-fade-in">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div className="flex items-center gap-2">

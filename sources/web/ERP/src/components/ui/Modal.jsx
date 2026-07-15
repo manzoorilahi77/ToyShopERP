@@ -30,7 +30,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = "ma
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
-              className={`bg-white rounded-2xl shadow-xl w-full ${maxWidth} pointer-events-auto overflow-hidden flex flex-col max-h-[90vh]`}
+              className={`card border-0 shadow-2xl w-full ${maxWidth} pointer-events-auto overflow-hidden flex flex-col max-h-[90vh]`}
             >
               <div className="flex justify-between items-center p-6 border-b border-slate-100">
                 <h3 className="text-lg font-heading font-semibold text-slate-800">{title}</h3>

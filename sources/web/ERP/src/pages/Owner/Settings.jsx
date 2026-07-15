@@ -73,7 +73,7 @@ export default function Settings() {
               </div>
               <button 
                 onClick={() => toggle('pushNotifs')}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${settings.pushNotifs ? 'bg-primary' : 'bg-slate-200'}`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${settings.pushNotifs ? 'bg-primary-600' : 'bg-slate-200'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.pushNotifs ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
@@ -86,7 +86,7 @@ export default function Settings() {
               </div>
               <button 
                 onClick={() => toggle('emailNotifs')}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${settings.emailNotifs ? 'bg-primary' : 'bg-slate-200'}`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${settings.emailNotifs ? 'bg-primary-600' : 'bg-slate-200'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.emailNotifs ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
@@ -114,7 +114,7 @@ export default function Settings() {
             <button 
               onClick={() => toggle('darkMode')}
               disabled
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors opacity-50 cursor-not-allowed ${settings.darkMode ? 'bg-primary' : 'bg-slate-200'}`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors opacity-50 cursor-not-allowed ${settings.darkMode ? 'bg-primary-600' : 'bg-slate-200'}`}
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.darkMode ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
@@ -140,7 +140,7 @@ export default function Settings() {
             </div>
             <button 
               onClick={() => toggle('twoFactor')}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${settings.twoFactor ? 'bg-primary' : 'bg-slate-200'}`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${settings.twoFactor ? 'bg-primary-600' : 'bg-slate-200'}`}
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.twoFactor ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
