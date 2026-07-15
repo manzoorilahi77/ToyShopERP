@@ -1,16 +1,71 @@
-# React + Vite
+# ToyShop ERP - Web Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Welcome to the frontend repository for the **ToyShop ERP System**. This application is built with **React JS** and serves as the primary interface for managing all operations within the ToyShop ecosystem, from point-of-sale transactions to global administrative tasks.
 
-Currently, two official plugins are available:
+## 🚀 Features & Modules
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The web application is tailored for three distinct roles, ensuring secure and relevant access to operations:
 
-## React Compiler
+### 1. Super Admin
+- **Tenants Management**: Onboard and manage multiple client stores.
+- **Global Overview**: Access global stock and staff analytics.
+- **Subscriptions & Logs**: Handle billing subscriptions and view critical system activity logs.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2. Owner
+- **Dashboard**: High-level overview of daily sales, profit, and stock alerts.
+- **Branch Management**: Create, edit, and organize multiple store branches.
+- **Stock & Products**: Add new inventory, auto-generate SKU IDs, and manage product catalogs.
+- **Staff Management**: Assign roles, branches, and manage employee accounts.
+- **GST & Reports**: Fully integrated GST compliance (CGST, SGST, IGST) with robust Excel report generation.
 
-## Expanding the ESLint configuration
+### 3. Staff (Cashier/Sales)
+- **Point of Sale (New Sale)**: Streamlined checkout process with real-time stock deduction and tax calculations.
+- **Sales History**: View previous transactions and generate receipts.
+- **Product Catalog**: Quick search functionality to check product availability and pricing.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🛠️ Technology Stack
+
+- **Framework**: React.js
+- **Styling**: Tailwind CSS (or Custom CSS Modules)
+- **Routing**: React Router DOM
+- **State Management**: Context API / Redux (depending on configuration)
+- **Build Tool**: Vite (or Create React App)
+
+## ⚙️ Getting Started
+
+### Prerequisites
+Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
+
+### Installation
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd sources/web/ERP
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Open your browser and navigate to the local development URL provided in the terminal (usually `http://localhost:5173` or `http://localhost:3000`).
+
+## 📁 Folder Structure
+
+- `/src/pages/` - Contains all the route components, segmented by roles (`/Auth`, `/Owner`, `/Staff`, `/SuperAdmin`).
+- `/src/components/` - Reusable UI components used across different pages.
+- `/src/assets/` - Static files like images, icons, and stylesheets.
+
+## 📝 Environment Variables
+Ensure you have a `.env` file at the root of the `ERP` directory configured with the backend API URL. Example:
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+---
+*Developed for the ToyShop ERP Platform.*
