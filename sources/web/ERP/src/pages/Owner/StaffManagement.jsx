@@ -54,6 +54,18 @@ export default function StaffManagement() {
       toast.error('Please fill in all required fields');
       return;
     }
+
+    const pinRegex = /^\d{4}$/;
+    if (!pinRegex.test(newPassword)) {
+      toast.error('Password must be exactly a 4-digit PIN');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
     
     try {
       setSaving(true);
@@ -73,7 +85,11 @@ export default function StaffManagement() {
       setShowModal(false);
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to add staff');
+      if (error.response?.data?.errors && error.response.data.errors.length > 0) {
+        toast.error(error.response.data.errors[0].message);
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to add staff');
+      }
     } finally {
       setSaving(false);
     }

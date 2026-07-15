@@ -8,6 +8,7 @@ const validate = (req, res, next) => {
       field: err.path,
       message: err.msg,
     }));
+    console.log("Validation Failed:", formattedErrors, "Body:", req.body);
     return errorResponse(res, 400, 'Validation failed', formattedErrors);
   }
   next();

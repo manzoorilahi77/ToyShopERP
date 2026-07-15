@@ -23,9 +23,9 @@ exports.getAllSales = async (req, res) => {
   try {
     const { branchId, role } = req.user;
     
-    // If not super admin, restrict to own branch
+    // If not super admin or owner, restrict to own branch
     const whereClause = {};
-    if (role !== 'Super Admin') {
+    if (role !== 'Super Admin' && role !== 'Owner') {
       whereClause.branchId = branchId;
     }
 

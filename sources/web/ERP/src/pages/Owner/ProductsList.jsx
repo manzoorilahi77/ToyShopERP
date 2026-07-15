@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 import { getCatalog, getCategories, createProduct, updateProduct, deleteProduct } from '../../services/productService';
 
@@ -19,6 +20,7 @@ const productSchema = z.object({
 
 
 export default function ProductsList() {
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [products, setProducts] = useState([]);
@@ -189,17 +191,7 @@ export default function ProductsList() {
           <p className="text-slate-500 mt-1 text-sm">Manage your inventory, prices, and stock levels.</p>
         </div>
         <button 
-          onClick={() => {
-            setEditingProduct(null);
-            reset({
-              name: '',
-              sku: '',
-              categoryId: '',
-              price: '',
-              stock: ''
-            });
-            setIsModalOpen(true);
-          }}
+          onClick={() => navigate('/owner/stock-addition')}
           className="btn-primary"
         >
           <Plus className="w-4 h-4 mr-2" />

@@ -44,8 +44,12 @@ export default function Reports() {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
     switch (periodStr) {
-      case 'Today':
-        return { start: date, end: new Date() };
+      case 'Today': {
+        const start = new Date(date);
+        const end = new Date(start);
+        end.setHours(23, 59, 59, 999);
+        return { start, end };
+      }
       case 'Yesterday': {
         const start = new Date(date);
         start.setDate(start.getDate() - 1);
@@ -56,14 +60,21 @@ export default function Reports() {
       case 'Last 7 Days': {
         const start = new Date(date);
         start.setDate(start.getDate() - 7);
-        return { start, end: new Date() };
+        const end = new Date(date);
+        end.setHours(23, 59, 59, 999);
+        return { start, end };
       }
       case 'This Month': {
         const start = new Date(date.getFullYear(), date.getMonth(), 1);
-        return { start, end: new Date() };
+        const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+        return { start, end };
       }
-      default:
-        return { start: date, end: new Date() };
+      default: {
+        const start = new Date(date);
+        const end = new Date(date);
+        end.setHours(23, 59, 59, 999);
+        return { start, end };
+      }
     }
   };
 

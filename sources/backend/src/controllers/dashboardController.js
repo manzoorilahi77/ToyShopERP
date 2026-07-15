@@ -4,23 +4,40 @@ const { Op } = require('sequelize');
 
 exports.getOwnerDashboard = async (req, res) => {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const period = req.query.period || 'Today';
+    let startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+    let endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 1);
+
+    if (period === 'Yesterday') {
+      startDate.setDate(startDate.getDate() - 1);
+      endDate.setDate(endDate.getDate() - 1);
+    } else if (period === 'Last 7 Days') {
+      startDate.setDate(startDate.getDate() - 7);
+    } else if (period === 'This Month') {
+      startDate.setDate(1);
+    }
+
+    const dateFilter = {
+      [Op.gte]: startDate,
+      [Op.lt]: endDate
+    };
 
     const branchId = req.query.branchId;
     const branchFilter = (branchId && branchId !== 'all') ? { branchId } : {};
 
     const totalRevenue = await Sale.sum('totalAmount', { where: branchFilter });
     const todayRevenue = await Sale.sum('totalAmount', {
-      where: { ...branchFilter, createdAt: { [Op.gte]: today } }
+      where: { ...branchFilter, createdAt: dateFilter }
     });
 
     const todayOrders = await Sale.count({
-      where: { ...branchFilter, createdAt: { [Op.gte]: today } }
+      where: { ...branchFilter, createdAt: dateFilter }
     });
 
     const todayPurchases = await Purchase.sum('totalAmount', {
-      where: { ...branchFilter, createdAt: { [Op.gte]: today } }
+      where: { ...branchFilter, createdAt: dateFilter }
     });
 
     const activeProducts = await Product.count({ where: { isActive: true } });
@@ -43,7 +60,7 @@ exports.getOwnerDashboard = async (req, res) => {
 
     // Top Performer
     const topSales = await Sale.findAll({
-      where: { ...branchFilter, createdAt: { [Op.gte]: today } },
+      where: { ...branchFilter, createdAt: dateFilter },
       attributes: [
         'userId',
         [sequelize.fn('SUM', sequelize.col('total_amount')), 'totalRevenue']
@@ -73,21 +90,20 @@ exports.getOwnerDashboard = async (req, res) => {
       const name = topSales[0]['user.name'] || 'Unknown';
       const initials = name.substring(0, 2).toUpperCase() || 'NA';
 
-      const topUserSales = await Sale.findAll({ where: { ...branchFilter, userId: topUserId, createdAt: { [Op.gte]: today } }, attributes: ['id'] });
+      const topUserSales = await Sale.findAll({ where: { ...branchFilter, userId: topUserId, createdAt: dateFilter }, attributes: ['id'] });
       const topUserSaleIds = topUserSales.map(s => s.id);
       const units = await SaleItem.sum('quantity', { where: { saleId: topUserSaleIds } }) || 0;
 
       topPerformer = { name, revenue, units, initials, color: '#2563EB' };
     }
 
-    // Fetch today's sales and purchases for charts
     const todaysSales = await Sale.findAll({
-      where: { ...branchFilter, createdAt: { [Op.gte]: today } },
+      where: { ...branchFilter, createdAt: dateFilter },
       attributes: ['totalAmount', 'createdAt']
     });
 
     const todaysPurchases = await Purchase.findAll({
-      where: { ...branchFilter, createdAt: { [Op.gte]: today } },
+      where: { ...branchFilter, createdAt: dateFilter },
       attributes: ['totalAmount', 'createdAt']
     });
 
