@@ -8,7 +8,8 @@ const ROLE_MAP = {
   'Super Admin': 1,
   'Owner': 2,
   'Manager': 3,
-  'Staff': 4
+  'Staff': 4,
+  'Online Sales': 5
 };
 
 export default function StaffManagement() {
@@ -255,6 +256,7 @@ export default function StaffManagement() {
                     className="input-field w-full appearance-none"
                   >
                     <option>Staff</option>
+                    <option>Online Sales</option>
                     <option>Manager</option>
                     <option>Owner</option>
                     <option>Super Admin</option>

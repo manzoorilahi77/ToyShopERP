@@ -62,7 +62,7 @@ const ProductDetails = () => {
           
           <div className="bg-gray-50 p-12 flex items-center justify-center relative">
             <img 
-              src={product.image ? `http://localhost:5000${product.image}` : 'https://placehold.co/600x600?text=No+Image'} 
+              src={product.image ? (product.image.startsWith('http') ? product.image : `http://localhost:5000${product.image.startsWith('/') ? '' : '/'}${product.image}`) : 'https://placehold.co/600x600?text=No+Image'} 
               alt={product.name} 
               className="w-full max-w-md h-auto object-contain rounded-xl drop-shadow-xl"
             />

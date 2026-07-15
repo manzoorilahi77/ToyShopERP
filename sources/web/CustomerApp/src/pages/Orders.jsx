@@ -101,7 +101,7 @@ const Orders = () => {
                     <li key={item.id} className="py-6 flex">
                       <div className="flex-shrink-0 w-24 h-24 border border-gray-100 rounded-lg overflow-hidden bg-gray-50 p-2">
                         <img 
-                          src={item.product?.image ? `http://localhost:5000${item.product.image}` : 'https://placehold.co/200x200?text=Toy'} 
+                          src={item.product?.image ? (item.product.image.startsWith('http') ? item.product.image : `http://localhost:5000${item.product.image.startsWith('/') ? '' : '/'}${item.product.image}`) : 'https://placehold.co/200x200?text=Toy'} 
                           alt={item.product?.name} 
                           className="w-full h-full object-contain"
                         />

@@ -38,13 +38,23 @@ exports.createUser = async (req, res) => {
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) return errorResponse(res, 400, 'Email already in use');
 
+    if (roleId) {
+      const roleExists = await Role.findByPk(roleId);
+      if (!roleExists) return errorResponse(res, 400, 'Invalid Role selected');
+    }
+    
+    if (branchId) {
+      const branchExists = await Branch.findByPk(branchId);
+      if (!branchExists) return errorResponse(res, 400, 'Invalid Branch selected');
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       roleId,
-      branchId
+      branchId: branchId || null
     });
 
     const userData = user.toJSON();
@@ -52,6 +62,9 @@ exports.createUser = async (req, res) => {
     
     return successResponse(res, 201, 'User created successfully', userData);
   } catch (error) {
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return errorResponse(res, 400, 'Invalid Role or Branch selected');
+    }
     return errorResponse(res, 500, 'Error creating user', [error.message]);
   }
 };
@@ -62,6 +75,16 @@ exports.updateUser = async (req, res) => {
     if (!user) return errorResponse(res, 404, 'User not found');
 
     const { password, ...updateData } = req.body;
+    
+    if (updateData.roleId) {
+      const roleExists = await Role.findByPk(updateData.roleId);
+      if (!roleExists) return errorResponse(res, 400, 'Invalid Role selected');
+    }
+    if (updateData.branchId) {
+      const branchExists = await Branch.findByPk(updateData.branchId);
+      if (!branchExists) return errorResponse(res, 400, 'Invalid Branch selected');
+    }
+
     if (password) {
       updateData.password = await bcrypt.hash(password, 10);
     }
@@ -73,6 +96,9 @@ exports.updateUser = async (req, res) => {
 
     return successResponse(res, 200, 'User updated successfully', userData);
   } catch (error) {
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return errorResponse(res, 400, 'Invalid Role or Branch selected');
+    }
     return errorResponse(res, 500, 'Error updating user', [error.message]);
   }
 };

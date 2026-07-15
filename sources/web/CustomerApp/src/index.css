@@ -42,3 +42,15 @@ body {
     radial-gradient(at 80% 100%, hsla(242,100%,70%,1) 0px, transparent 50%),
     radial-gradient(at 0% 0%, hsla(343,100%,76%,1) 0px, transparent 50%);
 }
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+

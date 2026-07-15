@@ -7,7 +7,7 @@ const staffNavItems = [
   { name: 'Home', path: '/staff', icon: Home },
   { name: 'Sell', path: '/staff/sell', icon: ShoppingCart },
   { name: 'History', path: '/staff/history', icon: Receipt },
-  { name: 'Online Orders', path: '/staff/online-orders', icon: Globe },
+
   { name: 'Catalog', path: '/staff/catalog', icon: Grid },
   { name: 'Profile', path: '/staff/profile', icon: User },
 ];

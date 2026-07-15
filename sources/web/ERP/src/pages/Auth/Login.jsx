@@ -48,8 +48,8 @@ export default function Login() {
       setTimeout(() => {
         login(user, { accessToken, refreshToken });
         toast.success(`Welcome back, ${user.name}!`);
-        const normalizedRole = user.role?.name?.toLowerCase().replace(' ', '_') || 'staff';
-        navigate(normalizedRole === 'super_admin' ? '/super-admin' : `/${normalizedRole}`);
+        const normalizedRole = user.role?.name?.toLowerCase().replace(' ', '-') || 'staff';
+        navigate(`/${normalizedRole}`);
       }, 300);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed. Incorrect PIN.');

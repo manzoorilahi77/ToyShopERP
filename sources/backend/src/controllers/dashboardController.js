@@ -18,6 +18,18 @@ exports.getOwnerDashboard = async (req, res) => {
       startDate.setDate(startDate.getDate() - 7);
     } else if (period === 'This Month') {
       startDate.setDate(1);
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(period)) {
+      // Specific Date YYYY-MM-DD
+      startDate = new Date(period);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 1);
+    } else if (/^\d{4}-\d{2}$/.test(period)) {
+      // Specific Month YYYY-MM
+      startDate = new Date(`${period}-01`);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + 1);
     }
 
     const dateFilter = {
@@ -33,8 +45,8 @@ exports.getOwnerDashboard = async (req, res) => {
       where: { ...branchFilter, createdAt: dateFilter }
     });
 
-    const onlineRevenue = await Sale.sum('totalAmount', { where: { ...branchFilter, orderType: 'online' } });
-    const offlineRevenue = await Sale.sum('totalAmount', { where: { ...branchFilter, orderType: 'offline' } });
+    const onlineRevenue = await Sale.sum('totalAmount', { where: { ...branchFilter, createdAt: dateFilter, orderType: 'online' } });
+    const offlineRevenue = await Sale.sum('totalAmount', { where: { ...branchFilter, createdAt: dateFilter, orderType: 'offline' } });
 
     const todayOrders = await Sale.count({
       where: { ...branchFilter, createdAt: dateFilter }
@@ -48,11 +60,9 @@ exports.getOwnerDashboard = async (req, res) => {
       where: { ...branchFilter, createdAt: dateFilter, orderType: 'offline' }
     });
 
-    const allProducts = await Product.findAll({ attributes: ['costPrice', 'stock'], raw: true });
-    let totalPurchases = 0;
-    for (let p of allProducts) {
-      totalPurchases += (parseFloat(p.costPrice) || 0) * (parseInt(p.stock) || 0);
-    }
+    const totalPurchases = await Purchase.sum('totalAmount', { 
+      where: { ...branchFilter, createdAt: dateFilter } 
+    });
 
     const activeProducts = await Product.count({ where: { isActive: true } });
     const lowStockProducts = await Product.count({ where: { stock: { [Op.lt]: 10 } } });

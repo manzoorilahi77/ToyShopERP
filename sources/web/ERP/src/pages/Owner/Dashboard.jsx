@@ -90,33 +90,63 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 font-heading">Dashboard Overview</h1>
-          <p className="text-slate-500 mt-1 text-sm">Welcome back, here's what's happening {period.toLowerCase()} for the selected branch.</p>
+          <p className="text-slate-500 mt-1 text-sm">Welcome back, here's what's happening {['Today', 'Yesterday', 'Last 7 Days', 'This Month'].includes(period) ? period.toLowerCase() : `for ${period}`} for the selected branch.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
+        <div className="flex items-center gap-3 overflow-x-auto pb-1 -mb-1">
+          <div className="relative group shrink-0">
             <select 
               value={branch} 
               onChange={(e) => setBranch(e.target.value)}
-              className="appearance-none bg-white border border-slate-200 rounded-lg pl-4 pr-10 py-2.5 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
+              className="appearance-none bg-white border border-slate-200 rounded-lg pl-4 pr-10 py-2.5 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 shadow-sm cursor-pointer group-hover:border-primary-200 transition-colors"
             >
               {branchesList.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
-            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-primary-500 transition-colors" />
           </div>
-          <div className="relative">
-            <select 
-              value={period} 
-              onChange={(e) => setPeriod(e.target.value)}
-              className="appearance-none bg-white border border-slate-200 rounded-lg pl-4 pr-10 py-2.5 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
-            >
-              {PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="relative">
+              <select 
+                value={['Today', 'Yesterday', 'Last 7 Days', 'This Month'].includes(period) ? period : ''} 
+                onChange={(e) => setPeriod(e.target.value)}
+                className={`appearance-none bg-white border rounded-lg pl-4 pr-10 py-[9px] text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 shadow-sm cursor-pointer transition-colors ${
+                  ['Today', 'Yesterday', 'Last 7 Days', 'This Month'].includes(period)
+                    ? 'border-primary-500 ring-2 ring-primary-500/20'
+                    : 'border-slate-200 hover:border-primary-200'
+                }`}
+              >
+                <option value="" disabled>Quick Range</option>
+                {PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+              <ChevronDown className={`w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${['Today', 'Yesterday', 'Last 7 Days', 'This Month'].includes(period) ? 'text-primary-500' : 'text-slate-400'}`} />
+            </div>
+
+            <div className="relative group">
+              <input 
+                type="date"
+                value={period.length === 10 ? period : ''}
+                onChange={(e) => setPeriod(e.target.value)}
+                className={`appearance-none bg-white border rounded-lg px-4 py-[7px] text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 shadow-sm cursor-pointer transition-colors ${
+                  period.length === 10 && period.includes('-')
+                    ? 'border-primary-500 ring-2 ring-primary-500/20 text-primary-700'
+                    : 'border-slate-200 hover:border-primary-200 text-slate-500'
+                }`}
+              />
+            </div>
+
+            <div className="relative group">
+              <input 
+                type="month"
+                value={period.length === 7 ? period : ''}
+                onChange={(e) => setPeriod(e.target.value)}
+                className={`appearance-none bg-white border rounded-lg px-4 py-[7px] text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 shadow-sm cursor-pointer transition-colors ${
+                  period.length === 7 && period.includes('-')
+                    ? 'border-primary-500 ring-2 ring-primary-500/20 text-primary-700'
+                    : 'border-slate-200 hover:border-primary-200 text-slate-500'
+                }`}
+              />
+            </div>
           </div>
-          <button className="btn-primary">
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Generate Report
-          </button>
         </div>
       </div>
 

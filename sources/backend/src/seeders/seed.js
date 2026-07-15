@@ -10,7 +10,8 @@ async function seed() {
     { name: 'Super Admin' },
     { name: 'Owner' },
     { name: 'Manager' },
-    { name: 'Staff' }
+    { name: 'Staff' },
+    { name: 'Online Sales' }
   ]);
 
   // Branches

@@ -17,6 +17,6 @@ router.use(authenticate);
 router.post('/', authorize('Super Admin', 'Owner', 'Manager'), upload.single('image'), createProductValidation, validate, productController.createProduct);
 router.put('/:id', authorize('Super Admin', 'Owner', 'Manager'), upload.single('image'), updateProductValidation, validate, productController.updateProduct);
 router.delete('/:id', authorize('Super Admin', 'Owner'), productController.deleteProduct);
-router.patch('/:id/favorite', authorize('Super Admin', 'Owner', 'Manager', 'Staff'), productController.toggleFavorite);
+router.patch('/:id/favorite', authorize('Super Admin', 'Owner', 'Manager', 'Staff', 'Online Sales'), productController.toggleFavorite);
 
 module.exports = router;

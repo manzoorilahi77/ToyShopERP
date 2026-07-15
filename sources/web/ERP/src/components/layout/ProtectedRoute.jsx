@@ -14,6 +14,7 @@ export default function ProtectedRoute({ allowedRoles }) {
     if (role === 'owner') return <Navigate to="/owner" replace />;
     if (role === 'staff') return <Navigate to="/staff" replace />;
     if (role === 'super_admin') return <Navigate to="/super-admin" replace />;
+    if (role === 'online_sales') return <Navigate to="/online-sales" replace />;
     
     return <Navigate to="/login" replace />;
   }

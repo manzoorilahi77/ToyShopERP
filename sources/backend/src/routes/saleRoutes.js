@@ -7,12 +7,12 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 router.use(authenticate);
 
-router.get('/my-sales', authorize('Staff', 'Manager', 'Owner'), saleController.getMySales);
-router.get('/online-orders', authorize('Super Admin', 'Owner', 'Manager', 'Staff'), saleController.getOnlineOrders);
-router.put('/online-orders/:id/status', authorize('Super Admin', 'Owner', 'Manager', 'Staff'), saleController.updateOnlineOrderStatus);
-router.get('/', authorize('Super Admin', 'Owner', 'Manager', 'Staff'), saleController.getAllSales);
-router.get('/:id', authorize('Super Admin', 'Owner', 'Manager', 'Staff'), saleController.getSaleById);
-router.post('/', authorize('Super Admin', 'Owner', 'Manager', 'Staff'), createSaleValidation, validate, saleController.createSale);
+router.get('/my-sales', authorize('Staff', 'Online Sales', 'Manager', 'Owner'), saleController.getMySales);
+router.get('/online-orders', authorize('Super Admin', 'Owner', 'Manager', 'Online Sales'), saleController.getOnlineOrders);
+router.put('/online-orders/:id/status', authorize('Super Admin', 'Owner', 'Manager', 'Online Sales'), saleController.updateOnlineOrderStatus);
+router.get('/', authorize('Super Admin', 'Owner', 'Manager', 'Staff', 'Online Sales'), saleController.getAllSales);
+router.get('/:id', authorize('Super Admin', 'Owner', 'Manager', 'Staff', 'Online Sales'), saleController.getSaleById);
+router.post('/', authorize('Super Admin', 'Owner', 'Manager', 'Staff', 'Online Sales'), createSaleValidation, validate, saleController.createSale);
 
 
 module.exports = router;

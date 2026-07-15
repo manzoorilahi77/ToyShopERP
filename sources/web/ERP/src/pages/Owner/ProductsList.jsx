@@ -29,6 +29,7 @@ export default function ProductsList() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeQuickFilter, setActiveQuickFilter] = useState('All');
 
   React.useEffect(() => {
     loadData();
@@ -113,6 +114,30 @@ export default function ProductsList() {
     }
   ], [categories]);
 
+  const filteredProducts = React.useMemo(() => {
+    let result = products;
+    if (activeQuickFilter === 'Low Stock') {
+      result = products.filter(p => p.stock > 0 && p.stock < 10);
+    } else if (activeQuickFilter === 'Out of Stock') {
+      result = products.filter(p => p.stock === 0);
+    } else if (activeQuickFilter === 'In Stock') {
+      result = products.filter(p => p.stock >= 10);
+    } else if (activeQuickFilter === 'Old Stock') {
+      // Mock old stock as items created more than 30 days ago, or just oldest 10 items if dates are missing
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      result = products.filter(p => {
+        if (!p.createdAt) return false;
+        return new Date(p.createdAt) < thirtyDaysAgo;
+      });
+      // Fallback if no items match (for demo purposes)
+      if (result.length === 0 && products.length > 0) {
+         result = [...products].sort((a,b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)).slice(0, Math.min(10, products.length));
+      }
+    }
+    return result;
+  }, [products, activeQuickFilter]);
+
   const columns = React.useMemo(
     () => [
       {
@@ -196,18 +221,35 @@ export default function ProductsList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 font-heading">Products Catalog</h1>
           <p className="text-slate-500 mt-1 text-sm">Manage your inventory, prices, and stock levels.</p>
         </div>
         <button 
           onClick={() => navigate('/owner/stock-addition')}
-          className="btn-primary"
+          className="btn-primary shrink-0"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Product
         </button>
+      </div>
+
+      {/* Quick Filters */}
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        {['All', 'In Stock', 'Low Stock', 'Out of Stock', 'Old Stock'].map(filter => (
+          <button
+            key={filter}
+            onClick={() => setActiveQuickFilter(filter)}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
+              activeQuickFilter === filter 
+                ? 'bg-primary-600 text-white shadow-md' 
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+            }`}
+          >
+            {filter}
+          </button>
+        ))}
       </div>
 
       {loading ? (
@@ -216,7 +258,7 @@ export default function ProductsList() {
         </div>
       ) : (
         <DataTable 
-          data={products} 
+          data={filteredProducts} 
           columns={columns} 
           filters={filters}
         />
