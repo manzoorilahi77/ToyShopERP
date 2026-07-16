@@ -8,9 +8,9 @@ const { authenticate, authorize } = require('../middleware/auth');
 router.use(authenticate);
 
 router.get('/', authorize('Super Admin', 'Owner', 'Manager'), gstController.getAllGstRegistrations);
-router.get('/:id', authorize('Super Admin', 'Owner', 'Manager'), gstController.getGstById);
 router.get('/dashboard', authorize('Super Admin', 'Owner', 'Manager'), gstController.getDashboardData);
 router.get('/reports', authorize('Super Admin', 'Owner', 'Manager'), gstController.getReportsData);
+router.get('/:id', authorize('Super Admin', 'Owner', 'Manager'), gstController.getGstById);
 
 router.post('/', authorize('Super Admin', 'Owner'), createGstValidation, validate, gstController.createGst);
 router.put('/:id', authorize('Super Admin', 'Owner'), updateGstValidation, validate, gstController.updateGst);

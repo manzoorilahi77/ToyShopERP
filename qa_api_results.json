@@ -5,7 +5,7 @@
     "path": "/auth/login",
     "requiresAuth": false,
     "status": 200,
-    "duration": "198 ms",
+    "duration": "261 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""
@@ -16,7 +16,7 @@
     "path": "/dashboard/owner",
     "requiresAuth": true,
     "status": 200,
-    "duration": "36 ms",
+    "duration": "82 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""
@@ -27,7 +27,7 @@
     "path": "/products",
     "requiresAuth": true,
     "status": 200,
-    "duration": "14 ms",
+    "duration": "21 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""
@@ -37,11 +37,11 @@
     "method": "POST",
     "path": "/products",
     "requiresAuth": true,
-    "status": 400,
-    "duration": "39 ms",
-    "isWorking": "No",
-    "passFail": "FAIL",
-    "error": "{\"success\":false,\"message\":\"Validation failed\",\"errors\":[{\"field\":\"categoryId\",\"message\":\"Category ID is required\"},{\"field\":\"categoryId\",\"message\":\"Invalid value\"}]}"
+    "status": 201,
+    "duration": "44 ms",
+    "isWorking": "Yes",
+    "passFail": "PASS",
+    "error": ""
   },
   {
     "name": "List Categories",
@@ -49,7 +49,7 @@
     "path": "/categories",
     "requiresAuth": true,
     "status": 200,
-    "duration": "11 ms",
+    "duration": "17 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""
@@ -60,7 +60,7 @@
     "path": "/categories",
     "requiresAuth": true,
     "status": 201,
-    "duration": "8 ms",
+    "duration": "12 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""
@@ -71,7 +71,7 @@
     "path": "/branches",
     "requiresAuth": true,
     "status": 200,
-    "duration": "7 ms",
+    "duration": "8 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""
@@ -82,21 +82,10 @@
     "path": "/users",
     "requiresAuth": true,
     "status": 200,
-    "duration": "20 ms",
+    "duration": "16 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""
-  },
-  {
-    "name": "List Customers",
-    "method": "GET",
-    "path": "/customers",
-    "requiresAuth": true,
-    "status": 403,
-    "duration": "10 ms",
-    "isWorking": "No",
-    "passFail": "FAIL",
-    "error": "{\"success\":false,\"message\":\"Forbidden. Only customers can access this resource.\",\"errors\":[]}"
   },
   {
     "name": "List Suppliers",
@@ -104,7 +93,7 @@
     "path": "/suppliers",
     "requiresAuth": true,
     "status": 200,
-    "duration": "32 ms",
+    "duration": "23 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""
@@ -115,7 +104,7 @@
     "path": "/sales",
     "requiresAuth": true,
     "status": 200,
-    "duration": "26 ms",
+    "duration": "47 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""
@@ -125,11 +114,11 @@
     "method": "POST",
     "path": "/sales",
     "requiresAuth": true,
-    "status": 400,
-    "duration": "20 ms",
-    "isWorking": "No",
-    "passFail": "FAIL",
-    "error": "{\"success\":false,\"message\":\"Validation failed\",\"errors\":[{\"field\":\"branchId\",\"message\":\"Branch ID is required\"},{\"field\":\"branchId\",\"message\":\"Invalid value\"},{\"field\":\"items[0].productId\",\"message\":\"Product ID is required for each item\"},{\"field\":\"items[0].productId\",\"message\":\"Invalid value\"}]}"
+    "status": 201,
+    "duration": "36 ms",
+    "isWorking": "Yes",
+    "passFail": "PASS",
+    "error": ""
   },
   {
     "name": "List Purchases",
@@ -137,7 +126,7 @@
     "path": "/purchases",
     "requiresAuth": true,
     "status": 200,
-    "duration": "11 ms",
+    "duration": "17 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""
@@ -145,13 +134,13 @@
   {
     "name": "Get GST Reports",
     "method": "GET",
-    "path": "/gst/reports",
+    "path": "/gst-registrations/reports",
     "requiresAuth": true,
-    "status": 404,
-    "duration": "17 ms",
-    "isWorking": "No",
-    "passFail": "FAIL",
-    "error": "{\"success\":false,\"message\":\"API endpoint not found\",\"errors\":[]}"
+    "status": 200,
+    "duration": "27 ms",
+    "isWorking": "Yes",
+    "passFail": "PASS",
+    "error": ""
   },
   {
     "name": "List Notifications",
@@ -159,43 +148,65 @@
     "path": "/notifications",
     "requiresAuth": true,
     "status": 200,
-    "duration": "36 ms",
+    "duration": "13 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""
   },
   {
-    "name": "Create Notification",
-    "method": "POST",
-    "path": "/notifications",
+    "name": "Read Notification",
+    "method": "PATCH",
+    "path": "/notifications/1/read",
     "requiresAuth": true,
-    "status": 404,
-    "duration": "12 ms",
-    "isWorking": "No",
-    "passFail": "FAIL",
-    "error": "{\"success\":false,\"message\":\"API endpoint not found\",\"errors\":[]}"
+    "status": 200,
+    "duration": "18 ms",
+    "isWorking": "Yes",
+    "passFail": "PASS",
+    "error": ""
+  },
+  {
+    "name": "Customer Register",
+    "method": "POST",
+    "path": "/customers/register",
+    "requiresAuth": false,
+    "status": 201,
+    "duration": "119 ms",
+    "isWorking": "Yes",
+    "passFail": "PASS",
+    "error": ""
+  },
+  {
+    "name": "Get Customer Profile",
+    "method": "GET",
+    "path": "/customers/profile",
+    "requiresAuth": true,
+    "status": 200,
+    "duration": "18 ms",
+    "isWorking": "Yes",
+    "passFail": "PASS",
+    "error": ""
   },
   {
     "name": "Get Cart",
     "method": "GET",
     "path": "/cart",
     "requiresAuth": true,
-    "status": 403,
-    "duration": "3 ms",
-    "isWorking": "No",
-    "passFail": "FAIL",
-    "error": "{\"success\":false,\"message\":\"Forbidden. Only customers can access this resource.\",\"errors\":[]}"
+    "status": 200,
+    "duration": "17 ms",
+    "isWorking": "Yes",
+    "passFail": "PASS",
+    "error": ""
   },
   {
     "name": "List Online Orders",
     "method": "GET",
     "path": "/online-orders",
     "requiresAuth": true,
-    "status": 403,
-    "duration": "11 ms",
-    "isWorking": "No",
-    "passFail": "FAIL",
-    "error": "{\"success\":false,\"message\":\"Forbidden. Only customers can access this resource.\",\"errors\":[]}"
+    "status": 200,
+    "duration": "12 ms",
+    "isWorking": "Yes",
+    "passFail": "PASS",
+    "error": ""
   },
   {
     "name": "Login Invalid Credentials",
@@ -203,7 +214,7 @@
     "path": "/auth/login",
     "requiresAuth": false,
     "status": 401,
-    "duration": "19 ms",
+    "duration": "17 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""
@@ -214,7 +225,7 @@
     "path": "/dashboard/owner",
     "requiresAuth": false,
     "status": 401,
-    "duration": "12 ms",
+    "duration": "2 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""
@@ -225,7 +236,7 @@
     "path": "/products",
     "requiresAuth": true,
     "status": 400,
-    "duration": "5 ms",
+    "duration": "10 ms",
     "isWorking": "Yes",
     "passFail": "PASS",
     "error": ""

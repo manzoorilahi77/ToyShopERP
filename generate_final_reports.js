@@ -152,8 +152,8 @@ async function generateAPIReport() {
     });
 
     const buffer = await Packer.toBuffer(doc);
-    fs.writeFileSync("ToyShopERP_API_Test_Report.docx", buffer);
-    console.log("-> ToyShopERP_API_Test_Report.docx generated.");
+    fs.writeFileSync("ToyShopERP_API_Test_Report_Final.docx", buffer);
+    console.log("-> ToyShopERP_API_Test_Report_Final.docx generated.");
 }
 
 async function run() {
