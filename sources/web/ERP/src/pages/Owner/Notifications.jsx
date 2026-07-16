@@ -15,8 +15,25 @@ export default function Notifications() {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/notifications');
-      setNotifications(res.data?.data || []);
+      const [notifsRes, lowStockRes] = await Promise.all([
+        api.get('/notifications'),
+        api.get('/products/low-stock').catch(() => ({ data: { data: [] } }))
+      ]);
+
+      const baseNotifs = notifsRes.data?.data || [];
+      const lowStockProducts = lowStockRes.data?.data || [];
+
+      const lowStockNotifs = lowStockProducts.map(product => ({
+        id: `alert-${product['Product ID']}`,
+        isAlert: true,
+        type: 'alert',
+        title: 'Low Stock Alert',
+        message: `${product['Product Name']} is running low on stock. Current Quantity: ${product['Current Quantity']}.`,
+        isRead: false,
+        createdAt: new Date().toISOString()
+      }));
+
+      setNotifications([...lowStockNotifs, ...baseNotifs]);
     } catch (error) {
       toast.error('Failed to load notifications');
     } finally {
@@ -41,11 +58,15 @@ export default function Notifications() {
   };
 
   const markAllRead = async () => {
-    const unread = notifications.filter(n => !n.isRead);
-    if (unread.length === 0) return;
+    const unread = notifications.filter(n => !n.isRead && !n.isAlert);
+    const unreadAlerts = notifications.filter(n => !n.isRead && n.isAlert);
+    
+    if (unread.length === 0 && unreadAlerts.length === 0) return;
     
     try {
-      await Promise.all(unread.map(n => api.patch(`/notifications/${n.id}/read`)));
+      if (unread.length > 0) {
+        await Promise.all(unread.map(n => api.patch(`/notifications/${n.id}/read`)));
+      }
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       toast.success('All marked as read');
     } catch (error) {
@@ -53,8 +74,14 @@ export default function Notifications() {
     }
   };
 
-  const markAsRead = async (id, isRead) => {
+  const markAsRead = async (id, isRead, isAlert) => {
     if (isRead) return;
+    
+    if (isAlert) {
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+      return;
+    }
+
     try {
       await api.patch(`/notifications/${id}/read`);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
@@ -107,7 +134,7 @@ export default function Notifications() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  onClick={() => markAsRead(notif.id, notif.isRead)}
+                  onClick={() => markAsRead(notif.id, notif.isRead, notif.isAlert)}
                   className={`card p-4 transition-all cursor-pointer ${
                     notif.isRead 
                       ? 'border-slate-100 opacity-80' 
