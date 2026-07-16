@@ -320,41 +320,39 @@ export default function ProductsList() {
               />
               {errors.gstRate && <p className="mt-1 text-xs text-red-500">{errors.gstRate.message}</p>}
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Cost Price (₹)</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  {...register('costPrice', { valueAsNumber: true })} 
-                  className="input-field" 
-                  placeholder="0.00" 
-                />
-                {errors.costPrice && <p className="mt-1 text-xs text-red-500">{errors.costPrice.message}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Sell Price (₹)</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  {...register('price', { valueAsNumber: true })} 
-                  className="input-field" 
-                  placeholder="0.00" 
-                />
-                {errors.price && <p className="mt-1 text-xs text-red-500">{errors.price.message}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  {editingProduct ? 'Add/Reduce Stock' : 'Initial Stock'}
-                </label>
-                <input 
-                  type="number" 
-                  {...register('stock', { valueAsNumber: true })} 
-                  className="input-field" 
-                  placeholder="0" 
-                />
-                {errors.stock && <p className="mt-1 text-xs text-red-500">{errors.stock.message}</p>}
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Cost Price (₹)</label>
+              <input 
+                type="number" 
+                step="0.01" 
+                {...register('costPrice', { valueAsNumber: true })} 
+                className="input-field" 
+                placeholder="0.00" 
+              />
+              {errors.costPrice && <p className="mt-1 text-xs text-red-500">{errors.costPrice.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Sell Price (₹)</label>
+              <input 
+                type="number" 
+                step="0.01" 
+                {...register('price', { valueAsNumber: true })} 
+                className="input-field" 
+                placeholder="0.00" 
+              />
+              {errors.price && <p className="mt-1 text-xs text-red-500">{errors.price.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {editingProduct ? 'Add/Reduce Stock' : 'Initial Stock'}
+              </label>
+              <input 
+                type="number" 
+                {...register('stock', { valueAsNumber: true })} 
+                className="input-field" 
+                placeholder="0" 
+              />
+              {errors.stock && <p className="mt-1 text-xs text-red-500">{errors.stock.message}</p>}
             </div>
           </div>
           

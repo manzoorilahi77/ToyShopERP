@@ -66,9 +66,9 @@ const ProductDetails = () => {
               alt={product.name} 
               className="w-full max-w-md h-auto object-contain rounded-xl drop-shadow-xl"
             />
-            {product.stockQuantity <= 0 && (
+            {product.stock <= 0 && (
               <div className="absolute top-6 left-6 bg-red-100 text-red-600 font-bold px-4 py-2 rounded-lg border border-red-200 shadow-sm">
-                Out of Stock
+                Currently unavailable, soon it will get updated
               </div>
             )}
           </div>
@@ -95,7 +95,13 @@ const ProductDetails = () => {
             </p>
 
             <div className="mt-auto space-y-6">
-              {product.stockQuantity > 0 ? (
+              {product.stock < 5 && product.stock > 0 && (
+                <div className="bg-orange-50 border border-orange-200 text-orange-700 px-4 py-3 rounded-xl flex items-center shadow-sm">
+                  <span className="font-bold mr-2">Hurry!</span> Only {product.stock} left in stock.
+                </div>
+              )}
+              
+              {product.stock > 0 ? (
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex items-center border-2 border-gray-200 rounded-xl bg-white overflow-hidden h-14">
                     <button 
@@ -106,7 +112,7 @@ const ProductDetails = () => {
                     </button>
                     <span className="px-6 font-bold text-lg text-gray-900">{quantity}</span>
                     <button 
-                      onClick={() => setQuantity(Math.min(product.stockQuantity, quantity + 1))}
+                      onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
                       className="px-4 py-2 text-gray-600 hover:bg-gray-100 h-full"
                     >
                       +
@@ -122,7 +128,7 @@ const ProductDetails = () => {
                 </div>
               ) : (
                 <button disabled className="w-full bg-gray-200 text-gray-500 font-bold text-lg rounded-xl h-14 flex items-center justify-center cursor-not-allowed">
-                  Currently Unavailable
+                  Currently unavailable, soon it will get updated
                 </button>
               )}
               

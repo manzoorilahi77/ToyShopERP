@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
@@ -9,16 +10,29 @@ const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { addToCart } = useContext(CartContext);
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get('search') || '';
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [search]);
 
   const fetchProducts = async () => {
     try {
+      setLoading(true);
       const res = await axios.get('http://localhost:5000/api/v1/products');
-      // Set all active products
-      setProducts(res.data.data.products || res.data.data);
+      let fetchedProducts = res.data.data.products || res.data.data;
+      
+      if (search) {
+        const lowerSearch = search.toLowerCase();
+        fetchedProducts = fetchedProducts.filter(p => 
+          p.name?.toLowerCase().includes(lowerSearch) || 
+          p.description?.toLowerCase().includes(lowerSearch) ||
+          p.category?.name?.toLowerCase().includes(lowerSearch)
+        );
+      }
+      
+      setProducts(fetchedProducts);
       setLoading(false);
     } catch (error) {
       console.error('Failed to fetch products', error);

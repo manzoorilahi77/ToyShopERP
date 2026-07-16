@@ -1,30 +1,88 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useContext, useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { CartContext } from '../context/CartContext';
 import { ShoppingCart, User, LogOut, Menu, Search, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 
 const Navbar = () => {
   const { customer, logout } = useContext(AuthContext);
   const { cart } = useContext(CartContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [allProducts, setAllProducts] = useState([]);
+  const [isFocused, setIsFocused] = useState(false);
+  
+  // To handle clicking outside the dropdown
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    // Fetch products for search dropdown
+    axios.get('http://localhost:5000/api/v1/products')
+      .then(res => setAllProducts(res.data.data.products || res.data.data))
+      .catch(err => console.error('Failed to fetch products for search', err));
+      
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
+
+  // Sync search term with URL on products page
+  useEffect(() => {
+    if (location.pathname === '/products') {
+      const params = new URLSearchParams(location.search);
+      setSearchTerm(params.get('search') || '');
+    } else {
+      setSearchTerm(''); // Clear when navigating away
+    }
+  }, [location.pathname, location.search]);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearchTerm(val);
+    if (location.pathname === '/products') {
+      navigate(`/products?search=${encodeURIComponent(val)}`, { replace: true });
+    }
+  };
+
+  const handleSearch = (e) => {
+    if (e.key === 'Enter' && searchTerm.trim()) {
+      if (location.pathname !== '/products') {
+        navigate(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
+      }
+      setIsFocused(false);
+    }
+  };
+
   const totalItems = cart?.items?.reduce((acc, item) => acc + item.quantity, 0) || 0;
+
+  const searchResults = searchTerm ? allProducts.filter(p => 
+    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.category?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  ).slice(0, 5) : [];
+
+  const showDropdown = isFocused && searchTerm && location.pathname !== '/products';
 
   return (
     <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'glass shadow-sm py-2' : 'bg-transparent py-4'}`}>
@@ -38,13 +96,52 @@ const Navbar = () => {
           </Link>
 
           <div className="hidden md:flex flex-1 max-w-xl mx-8">
-            <div className="relative w-full group">
+            <div className="relative w-full group" ref={dropdownRef}>
               <input 
                 type="text" 
+                value={searchTerm}
+                onChange={handleSearchChange}
+                onKeyDown={handleSearch}
+                onFocus={() => setIsFocused(true)}
                 placeholder="Search toys, brands, categories..." 
                 className="w-full bg-slate-100/80 backdrop-blur-sm rounded-full py-2.5 px-5 pl-12 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-300 shadow-inner"
               />
               <Search className="absolute left-4 top-3 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+              
+              <AnimatePresence>
+                {showDropdown && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50"
+                  >
+                    {searchResults.length > 0 ? (
+                      <ul>
+                        {searchResults.map(product => (
+                          <li key={product.id}>
+                            <Link 
+                              to={`/product/${product.id}`}
+                              onClick={() => { setIsFocused(false); setSearchTerm(''); }}
+                              className="flex items-center p-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0"
+                            >
+                              <img src={product.image} alt={product.name} className="w-12 h-12 object-cover rounded-md" />
+                              <div className="ml-3">
+                                <p className="text-sm font-semibold text-slate-800">{product.name}</p>
+                                <p className="text-xs text-slate-500">${Number(product.price).toFixed(2)}</p>
+                              </div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="p-4 text-center text-sm text-slate-500">
+                        No products found for "{searchTerm}"
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 

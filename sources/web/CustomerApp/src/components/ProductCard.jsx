@@ -29,8 +29,8 @@ const ProductCard = ({ product, onAddToCart }) => {
             </div>
           )}
           {product.stock <= 0 && (
-            <div className="bg-red-100/90 backdrop-blur-sm text-red-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm border border-red-200">
-              Out of Stock
+            <div className="bg-red-100/90 backdrop-blur-sm text-red-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm border border-red-200 text-center">
+              Currently unavailable, soon it will get updated
             </div>
           )}
           {product.rating && (
