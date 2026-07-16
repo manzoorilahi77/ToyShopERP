@@ -4,15 +4,12 @@ const { Role } = require('./src/models');
 async function fixRoles() {
   await sequelize.authenticate();
   
-  const [role, created] = await Role.findOrCreate({
-    where: { name: 'Online Sales' },
-    defaults: { name: 'Online Sales' }
-  });
+  const deleted = await Role.destroy({ where: { name: 'Online Sales' } });
   
-  if (created) {
-    console.log("Added 'Online Sales' role with ID:", role.id);
+  if (deleted) {
+    console.log("Deleted 'Online Sales' role.");
   } else {
-    console.log("'Online Sales' role already exists with ID:", role.id);
+    console.log("'Online Sales' role not found.");
   }
   process.exit(0);
 }

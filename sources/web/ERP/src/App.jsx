@@ -34,8 +34,6 @@ import StaffProfile from './pages/Staff/StaffProfile';
 import OnlineOrders from './pages/Staff/OnlineOrders';
 
 import SuperAdminShell from './layouts/SuperAdminShell';
-import OnlineSalesShell from './layouts/OnlineSalesShell';
-import OnlineSalesDashboard from './pages/OnlineSales/OnlineSalesDashboard';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 
 const App = () => {
@@ -70,15 +68,7 @@ const App = () => {
               <Route path="history" element={<SalesHistory />} />
               <Route path="catalog" element={<ProductCatalog />} />
               <Route path="profile" element={<StaffProfile />} />
-            </Route>
-          </Route>
-
-          <Route element={<ProtectedRoute allowedRoles={['online_sales']} />}>
-            <Route path="/online-sales" element={<OnlineSalesShell />}>
-              <Route index element={<OnlineSalesDashboard />} />
-              <Route path="orders" element={<OnlineOrders />} />
-              <Route path="catalog" element={<ProductCatalog />} />
-              <Route path="profile" element={<StaffProfile />} />
+              <Route path="online-orders" element={<OnlineOrders />} />
             </Route>
           </Route>
 

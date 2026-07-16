@@ -163,7 +163,7 @@ export default function OwnerSales() {
                 productName: item.product?.name || 'Unknown Product',
                 originalAmount: item.product?.costPrice || item.product?.price || 0, // Fallback to price if costPrice is 0/null
                 updatedAmount: parseFloat(item.unitPrice),
-                salesmanName: sale.orderType === 'online' ? 'Online Sales Staff' : (sale.user?.name || 'Unknown Staff'),
+                salesmanName: sale.orderType === 'online' ? 'Online Order' : (sale.user?.name || 'Unknown Staff'),
                 saleDate: new Date(sale.createdAt).toLocaleString(),
                 saleObj: sale, // Keep reference to original sale for receipt
               });
