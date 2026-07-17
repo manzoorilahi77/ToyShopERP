@@ -73,4 +73,6 @@ class Account {
       isActive: json['isActive'] ?? true,
     );
   }
+
+  String? get token => null;
 }

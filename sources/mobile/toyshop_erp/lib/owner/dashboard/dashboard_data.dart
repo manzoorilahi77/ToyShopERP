@@ -120,7 +120,7 @@ class OwnerDashboardRepository {
           backendOnlineRevenue = double.tryParse(stats['onlineRevenue']?.toString() ?? '0') ?? 0.0;
           backendOfflineRevenue = double.tryParse(stats['offlineRevenue']?.toString() ?? '0') ?? 0.0;
           backendLowStockCount = int.tryParse(stats['lowStockProducts']?.toString() ?? '0') ?? 0;
-          backendPurchasesTotal = double.tryParse(stats['todayPurchases']?.toString() ?? '0') ?? 0.0;
+          backendPurchasesTotal = double.tryParse(stats['totalPurchases']?.toString() ?? '0') ?? 0.0;
           backendProfitEstimate = double.tryParse(stats['profitEstimate']?.toString() ?? '0') ?? 0.0;
           
           backendAgingStockCount = int.tryParse(stats['agingStockCount']?.toString() ?? '0') ?? backendAgingStockCount;

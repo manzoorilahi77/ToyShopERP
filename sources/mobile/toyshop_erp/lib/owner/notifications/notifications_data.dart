@@ -100,27 +100,67 @@ class OwnerNotificationsRepository {
   Future<List<AppNotification>> all() async {
     try {
       final token = await StorageService.getAccessToken();
-      final res = await http.get(
-        Uri.parse(ApiConfig.notifications),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-      );
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
+      final headers = {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+      final responses = await Future.wait([
+        http.get(Uri.parse(ApiConfig.notifications), headers: headers),
+        http.get(Uri.parse('${ApiConfig.products}/low-stock'), headers: headers),
+      ]);
+
+      final notifsRes = responses[0];
+      final lowStockRes = responses[1];
+
+      final List<AppNotification> allNotifs = [];
+
+      // Parse Low Stock Alerts
+      if (lowStockRes.statusCode == 200) {
+        final data = jsonDecode(lowStockRes.body);
         if (data['success'] == true && data['data'] != null) {
-          final List<dynamic> items = data['data'];
-          return items.map((item) => AppNotification(
-            id: item['id']?.toString() ?? '',
-            type: _parseType(item['type']),
-            title: item['title'] ?? '',
-            body: item['body'] ?? '',
-            createdAt: item['createdAt'] != null ? DateTime.parse(item['createdAt']) : DateTime.now(),
-            isRead: item['isRead'] ?? false,
-          )).toList();
+          final List<dynamic> lowStockItems = data['data'];
+          allNotifs.addAll(lowStockItems.map((product) => AppNotification(
+            id: 'alert-${product['Product ID']}',
+            type: NotifType.lowStock,
+            title: 'Low Stock Alert',
+            body: '${product['Product Name']} is running low on stock. Current Quantity: ${product['Current Quantity']}.',
+            createdAt: DateTime.now(),
+            isRead: false,
+          )));
         }
       }
+
+      // Parse Base Notifications
+      if (notifsRes.statusCode == 200) {
+        final data = jsonDecode(notifsRes.body);
+        if (data['success'] == true && data['data'] != null) {
+          final List<dynamic> items = data['data'];
+          allNotifs.addAll(items.map((item) {
+            String title = item['title'] ?? '';
+            String body = item['message'] ?? item['body'] ?? '';
+            NotifType type = _parseType(item['type']);
+            
+            if (title.toLowerCase().contains('order') || title.toLowerCase().contains('sale')) {
+              type = NotifType.sale;
+            } else if (title.toLowerCase().contains('low stock')) {
+              type = NotifType.lowStock;
+            }
+
+            return AppNotification(
+              id: item['id']?.toString() ?? '',
+              type: type,
+              title: title,
+              body: body,
+              createdAt: item['createdAt'] != null ? DateTime.parse(item['createdAt']) : DateTime.now(),
+              isRead: item['isRead'] ?? false,
+            );
+          }));
+        }
+      }
+
+      allNotifs.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return allNotifs;
     } catch (e) {
       debugPrint('Error fetching notifications: $e');
     }

@@ -7,6 +7,7 @@ import '../gst/gst_registrations_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../staff/staff_management_screen.dart';
 import '../settings/settings_screen.dart';
+import '../sales/sales_screen.dart';
 
 /// Owner "More" tab — hub to the secondary owner screens that don't fit the
 /// bottom nav (Catalog, Staff, GST, Notifications), plus profile + sign out.
@@ -45,6 +46,8 @@ class OwnerMoreScreen extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 18),
+          _tile(context, Icons.receipt_long_rounded, 'Sales History',
+              'View all shop sales', const SalesScreen()),
           _tile(context, Icons.inventory_2_rounded, 'Product Catalog',
               'Add, edit, deactivate products', const ProductCatalogManagementScreen()),
           _tile(context, Icons.store_rounded, 'Branches Management',
