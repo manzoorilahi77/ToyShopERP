@@ -425,7 +425,6 @@ class _ProductCatalogManagementScreenState extends State<ProductCatalogManagemen
       supplier: draft.supplier,
       price: draft.price,
       colorTag: draft.colorTag,
-      shelf: draft.shelf,
       gstRate: draft.gstRate,
     );
     if (!mounted || !sheetCtx.mounted) return;
@@ -576,7 +575,9 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
   late final TextEditingController _priceCtrl = TextEditingController(
     text: widget.product.price > 0 ? widget.product.price.toStringAsFixed(0) : '',
   );
-  late final TextEditingController _shelfCtrl = TextEditingController(text: widget.product.shelf ?? '');
+  late final TextEditingController _stockCtrl = TextEditingController(
+    text: widget.product.stockQty?.toString() ?? '0',
+  );
   late String _category = widget.product.category;
   late Color _colorTag = widget.product.colorTag;
   bool _busy = false;
@@ -584,7 +585,7 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
   @override
   void dispose() {
     _priceCtrl.dispose();
-    _shelfCtrl.dispose();
+    _stockCtrl.dispose();
     super.dispose();
   }
 
@@ -599,12 +600,11 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    final shelfText = _shelfCtrl.text.trim();
     final updated = widget.product.withCatalogEdits(
       price: double.parse(_priceCtrl.text.trim()),
       category: _category,
       colorTag: _colorTag,
-      shelf: shelfText.isEmpty ? null : shelfText,
+      stockQty: int.tryParse(_stockCtrl.text.trim()) ?? 0,
     );
     await _runBusy(() => widget.onSave(updated));
   }
@@ -696,6 +696,17 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
               },
             ),
             const SizedBox(height: AppSpacing.md),
+            TextFormField(
+              controller: _stockCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Stock quantity'),
+              validator: (v) {
+                final val = int.tryParse((v ?? '').trim());
+                if (val == null || val < 0) return 'Enter a valid stock quantity';
+                return null;
+              },
+            ),
+            const SizedBox(height: AppSpacing.md),
             DropdownButtonFormField<String>(
               initialValue: _category,
               decoration: const InputDecoration(labelText: 'Category'),
@@ -713,10 +724,6 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
               onSelect: (c) => setState(() => _colorTag = c),
             ),
             const SizedBox(height: AppSpacing.md),
-            TextFormField(
-              controller: _shelfCtrl,
-              decoration: const InputDecoration(labelText: 'Shelf location', hintText: 'e.g. Rack A2'),
-            ),
             const SizedBox(height: AppSpacing.lg),
             Text('Details', style: AppType.title.copyWith(color: p.ink)),
             const SizedBox(height: 4),
@@ -777,7 +784,6 @@ class _NewProductDraft {
     required this.price,
     required this.colorTag,
     required this.gstRate,
-    this.shelf,
   });
 
   final String name;
@@ -786,7 +792,6 @@ class _NewProductDraft {
   final double price;
   final Color colorTag;
   final int gstRate;
-  final String? shelf;
 }
 
 class _AddProductSheet extends StatefulWidget {
@@ -804,7 +809,6 @@ class _AddProductSheetState extends State<_AddProductSheet> {
   final _nameCtrl = TextEditingController();
   final _supplierCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
-  final _shelfCtrl = TextEditingController();
   late String? _category = widget.categories.isNotEmpty ? widget.categories.first.name : null;
   int _gstRate = 18;
   Color _colorTag = kCatalogColorTags.first;
@@ -815,7 +819,6 @@ class _AddProductSheetState extends State<_AddProductSheet> {
     _nameCtrl.dispose();
     _supplierCtrl.dispose();
     _priceCtrl.dispose();
-    _shelfCtrl.dispose();
     super.dispose();
   }
 
@@ -824,7 +827,6 @@ class _AddProductSheetState extends State<_AddProductSheet> {
     final category = _category;
     if (category == null) return;
     setState(() => _busy = true);
-    final shelf = _shelfCtrl.text.trim();
     try {
       await widget.onSubmit(_NewProductDraft(
         name: _nameCtrl.text.trim(),
@@ -833,7 +835,6 @@ class _AddProductSheetState extends State<_AddProductSheet> {
         price: double.parse(_priceCtrl.text.trim()),
         colorTag: _colorTag,
         gstRate: _gstRate,
-        shelf: shelf.isEmpty ? null : shelf,
       ));
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -913,13 +914,6 @@ class _AddProductSheetState extends State<_AddProductSheet> {
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            TextFormField(
-              controller: _shelfCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Shelf location',
-                hintText: 'optional — e.g. Rack A2',
-              ),
-            ),
             const SizedBox(height: AppSpacing.md),
             Text('Color tag', style: AppType.body.copyWith(color: p.inkMuted)),
             const SizedBox(height: 8),

@@ -131,6 +131,38 @@ exports.getOwnerDashboard = async (req, res) => {
       attributes: ['totalAmount', 'createdAt']
     });
 
+    // Calculate Profit
+    const salesForProfit = await Sale.findAll({
+      where: { ...branchFilter, createdAt: dateFilter },
+      attributes: ['id'],
+      include: [
+        {
+          model: SaleItem,
+          as: 'items',
+          attributes: ['unitPrice', 'quantity'],
+          include: [
+            {
+              model: Product,
+              as: 'product',
+              attributes: ['costPrice']
+            }
+          ]
+        }
+      ]
+    });
+
+    let profitEstimate = 0;
+    for (const sale of salesForProfit) {
+      if (sale.items) {
+        for (const item of sale.items) {
+          const cost = parseFloat(item.product?.costPrice || 0);
+          const price = parseFloat(item.unitPrice || 0);
+          const qty = parseInt(item.quantity || 0);
+          profitEstimate += (price - cost) * qty;
+        }
+      }
+    }
+
     // 1. Revenue Analytics (Today) - Cumulative revenue
     let revenueData = [
       { name: '8 AM', total: 0 },
@@ -190,6 +222,7 @@ exports.getOwnerDashboard = async (req, res) => {
       todayOnlineOrders: todayOnlineOrders || 0,
       todayOfflineOrders: todayOfflineOrders || 0,
       totalPurchases: totalPurchases || 0,
+      profitEstimate: profitEstimate || 0,
       activeProducts,
       lowStockProducts,
       agingStockCount,

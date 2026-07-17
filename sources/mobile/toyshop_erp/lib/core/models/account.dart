@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 /// App roles. A single app serves all of them; the account's [role] chosen at
 /// login decides which shell/dashboard the user lands on.
 enum UserRole {
-  staff('Staff'),
+  superAdmin('Super Admin'),
   owner('Owner'),
-  accountant('Accountant');
+  manager('Manager'),
+  accountant('Accountant'),
+  staff('Staff');
 
   const UserRole(this.label);
   final String label;
 
-  bool get isOwnerSide => this == owner || this == accountant;
+  bool get isOwnerSide => this == owner || this == accountant || this == superAdmin || this == manager;
 }
 
 /// A login-roster entry (staff picker tile). Mirrors the `staff` roster subset

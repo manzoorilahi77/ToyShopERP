@@ -7,6 +7,17 @@ import '../../core/models/product.dart';
 import '../../core/models/status.dart';
 import '../../core/utils/storage_service.dart';
 
+String? _formatImageUrl(String? url) {
+  if (url == null || url.isEmpty) return null;
+  if (url.startsWith('http://localhost:5000')) {
+    return url.replaceFirst('http://localhost:5000', 'http://127.0.0.1:5000');
+  }
+  if (url.startsWith('/')) {
+    return 'http://127.0.0.1:5000$url';
+  }
+  return url;
+}
+
 @immutable
 class CatalogMeta {
   const CatalogMeta({
@@ -70,7 +81,7 @@ extension ProductCatalogEdit on Product {
     double? price,
     String? category,
     Color? colorTag,
-    String? shelf,
+    int? stockQty,
   }) {
     return Product(
       id: id,
@@ -80,9 +91,9 @@ extension ProductCatalogEdit on Product {
       colorTag: colorTag ?? this.colorTag,
       mrp: mrp,
       stock: stock,
-      stockQty: stockQty,
+      stockQty: stockQty ?? this.stockQty,
       supplier: supplier,
-      shelf: shelf ?? this.shelf,
+      shelf: shelf,
       qrCode: qrCode,
       icon: icon,
       isFavorite: isFavorite,
@@ -171,6 +182,7 @@ class ProductCatalogRepository {
               supplier: item['supplier'] ?? 'Unknown',
               shelf: item['shelf'],
               gstRate: 18,
+              image: _formatImageUrl(item['image']),
             );
             _apiProducts.add(p);
             _apiMeta[p.id] = CatalogMeta(
@@ -277,6 +289,7 @@ class ProductCatalogRepository {
       body: jsonEncode({
         'name': updated.name,
         'price': updated.price,
+        'stock': updated.stockQty,
       }),
     );
     if (response.statusCode == 200) {

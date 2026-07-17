@@ -5,8 +5,11 @@
 // `POST /notifications/read-all` — see
 // docs/mobile/owner/notifications/notifications.md §9.
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
-
+import 'package:http/http.dart' as http;
+import '../../core/api_config.dart';
+import '../../core/utils/storage_service.dart';
 import '../../core/core.dart';
 
 /// Canonical notification categories (design-system.md §8 — meaning is
@@ -95,8 +98,59 @@ class OwnerNotificationsRepository {
   const OwnerNotificationsRepository();
 
   Future<List<AppNotification>> all() async {
-    await Future<void>.delayed(const Duration(milliseconds: 300));
+    try {
+      final token = await StorageService.getAccessToken();
+      final res = await http.get(
+        Uri.parse(ApiConfig.notifications),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['data'] != null) {
+          final List<dynamic> items = data['data'];
+          return items.map((item) => AppNotification(
+            id: item['id']?.toString() ?? '',
+            type: _parseType(item['type']),
+            title: item['title'] ?? '',
+            body: item['body'] ?? '',
+            createdAt: item['createdAt'] != null ? DateTime.parse(item['createdAt']) : DateTime.now(),
+            isRead: item['isRead'] ?? false,
+          )).toList();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching notifications: $e');
+    }
     return _demo;
+  }
+
+  Future<void> markRead(String id) async {
+    try {
+      final token = await StorageService.getAccessToken();
+      await http.patch(
+        Uri.parse('${ApiConfig.notifications}/$id/read'),
+        headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+    } catch (e) {
+      debugPrint('Error marking notification as read: $e');
+    }
+  }
+
+  NotifType _parseType(String? typeStr) {
+    switch (typeStr) {
+      case 'low_stock': return NotifType.lowStock;
+      case 'aging_stock': return NotifType.agingStock;
+      case 'sync': return NotifType.sync;
+      case 'gst': return NotifType.gst;
+      case 'milestone': return NotifType.milestone;
+      case 'sale': return NotifType.sale;
+      default: return NotifType.sync;
+    }
   }
 }
 

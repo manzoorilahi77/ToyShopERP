@@ -8,7 +8,11 @@
 //   deactivate  → PATCH /gst/registrations/{id}  { is_active:0, owner_pin }
 //   mark filed  → GST filing module, see cloud/api/gst/gst-api.md
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../../core/api_config.dart';
+import '../../core/utils/storage_service.dart';
 
 /// Filing state of one GSTR period — icon + label per design-system.md §8
 /// (never color alone).
@@ -164,8 +168,95 @@ class GstRegistrationsRepository {
   const GstRegistrationsRepository();
 
   Future<List<GstRegistration>> all() async {
-    await Future.delayed(const Duration(milliseconds: 450));
+    try {
+      final token = await StorageService.getAccessToken();
+      final res = await http.get(
+        Uri.parse(ApiConfig.gst),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['data'] != null) {
+          final List<dynamic> items = data['data'];
+          return items.map((item) => GstRegistration(
+            id: item['id']?.toString() ?? '',
+            gstin: item['gstNumber'] ?? '',
+            legalName: item['businessName'] ?? 'Unknown',
+            tradeName: item['tradeName'],
+            address: item['address'] ?? 'Unknown',
+            state: item['state'] ?? 'Unknown',
+            isActive: item['status'] == 'active',
+            currentPeriodLiability: 0, // Backend doesn't return this yet
+            filingStatus: GstFilingStatus.pending,
+            lastFiledPeriod: 'Never',
+            registeredOn: item['createdAt'] != null ? DateTime.parse(item['createdAt']) : DateTime.now(),
+            periods: const [], 
+          )).toList();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching GST data: $e');
+    }
     return List.unmodifiable(_demo);
+  }
+
+  GstFilingStatus _parseStatus(String? status) {
+    if (status == 'filed') return GstFilingStatus.filed;
+    if (status == 'overdue') return GstFilingStatus.overdue;
+    return GstFilingStatus.pending;
+  }
+
+  Future<void> add(GstRegistration reg) async {
+    final token = await StorageService.getAccessToken();
+    await http.post(
+      Uri.parse(ApiConfig.gst),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'gstNumber': reg.gstin,
+        'businessName': reg.legalName,
+        'tradeName': reg.tradeName,
+        'address': reg.address,
+        'state': reg.state,
+        'stateCode': reg.stateCode,
+        'status': reg.isActive ? 'active' : 'inactive',
+      }),
+    );
+  }
+
+  Future<void> update(GstRegistration reg) async {
+    final token = await StorageService.getAccessToken();
+    await http.put(
+      Uri.parse('${ApiConfig.gst}/${reg.id}'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'gstNumber': reg.gstin,
+        'businessName': reg.legalName,
+        'tradeName': reg.tradeName,
+        'address': reg.address,
+        'state': reg.state,
+        'stateCode': reg.stateCode,
+        'status': reg.isActive ? 'active' : 'inactive',
+      }),
+    );
+  }
+
+  Future<void> delete(String id) async {
+    final token = await StorageService.getAccessToken();
+    await http.delete(
+      Uri.parse('${ApiConfig.gst}/$id'),
+      headers: {
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
   }
 }
 

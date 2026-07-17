@@ -23,6 +23,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   final _repo = const OwnerDashboardRepository();
   OwnerDashboardData? _data;
   String? _selectedBranchId; // null means 'All Branches'
+  String _selectedPeriod = 'Today';
 
   @override
   void initState() {
@@ -31,7 +32,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   }
 
   Future<void> _loadData() async {
-    final d = await _repo.load(branchId: _selectedBranchId);
+    final d = await _repo.load(branchId: _selectedBranchId, period: _selectedPeriod);
     if (mounted) setState(() => _data = d);
   }
 
@@ -63,7 +64,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                     children: [
-                      _branchSelector(branches),
+                      _filters(branches),
                       const SizedBox(height: 18),
                       _kpiGrid(data),
                       const SizedBox(height: 18),
@@ -86,33 +87,95 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  Widget _branchSelector(List<Branch> branches) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: context.palette.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String?>(
-          value: _selectedBranchId,
-          isExpanded: true,
-          icon: Icon(Icons.arrow_drop_down_rounded, color: context.palette.primary),
-          items: [
-            const DropdownMenuItem(value: null, child: Text('All Branches')),
-            ...branches.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))),
-          ],
-          onChanged: (val) {
-            if (_selectedBranchId != val) {
+  Widget _filters(List<Branch> branches) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: context.palette.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String?>(
+                value: _selectedBranchId,
+                isExpanded: true,
+                icon: Icon(Icons.arrow_drop_down_rounded, color: context.palette.primary),
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('All Branches')),
+                  ...branches.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))),
+                ],
+                onChanged: (val) {
+                  if (_selectedBranchId != val) {
+                    setState(() {
+                      _selectedBranchId = val;
+                      _data = null; // show loading
+                    });
+                    _loadData();
+                  }
+                },
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: context.palette.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: ['Today', 'Yesterday', 'Last 7 Days', 'This Month'].contains(_selectedPeriod) 
+                       ? _selectedPeriod 
+                       : _selectedPeriod,
+                isExpanded: true,
+                icon: Icon(Icons.arrow_drop_down_rounded, color: context.palette.primary),
+                items: [
+                  const DropdownMenuItem(value: 'Today', child: Text('Today')),
+                  const DropdownMenuItem(value: 'Yesterday', child: Text('Yesterday')),
+                  const DropdownMenuItem(value: 'Last 7 Days', child: Text('Last 7 Days')),
+                  const DropdownMenuItem(value: 'This Month', child: Text('This Month')),
+                  if (!['Today', 'Yesterday', 'Last 7 Days', 'This Month'].contains(_selectedPeriod))
+                    DropdownMenuItem(value: _selectedPeriod, child: Text(_selectedPeriod)),
+                ],
+                onChanged: (val) {
+                  if (val != null && _selectedPeriod != val) {
+                    setState(() {
+                      _selectedPeriod = val;
+                      _data = null;
+                    });
+                    _loadData();
+                  }
+                },
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+        IconButton(
+          icon: Icon(Icons.calendar_month_rounded, color: context.palette.primary),
+          onPressed: () async {
+            final date = await showDatePicker(
+              context: context,
+              initialDate: DateTime.now(),
+              firstDate: DateTime(2020),
+              lastDate: DateTime.now(),
+            );
+            if (date != null) {
+              final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
               setState(() {
-                _selectedBranchId = val;
-                _data = null; // show loading
+                _selectedPeriod = dateStr;
+                _data = null;
               });
               _loadData();
             }
           },
         ),
-      ),
+      ],
     );
   }
 
@@ -147,19 +210,37 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         KpiCard(
           label: 'Revenue',
           value: Fmt.money0(d.salesTotal),
-          icon: Icons.attach_money_rounded, // or Icons.currency_rupee_rounded if you prefer $
+          icon: Icons.attach_money_rounded,
           accent: context.palette.primary, // blue
           trend: '${d.salesTrendPct.abs().toStringAsFixed(1)}% vs last month',
           trendUp: d.salesTrendPct >= 0,
           onTap: () {},
         ),
         KpiCard(
-          label: 'Orders',
-          value: d.salesCount.toString(),
-          icon: Icons.shopping_cart_outlined,
+          label: 'Profit (Est.)',
+          value: Fmt.money0(d.profitEstimate),
+          icon: Icons.auto_graph_rounded,
           accent: context.palette.success, // green
-          trend: '${d.ordersTrendPct.abs().toStringAsFixed(1)}% vs last month',
-          trendUp: d.ordersTrendPct >= 0,
+          trend: 'Margin: ${d.marginPct}%',
+          trendUp: true,
+          onTap: () {},
+        ),
+        KpiCard(
+          label: 'Online Orders',
+          value: Fmt.money0(d.onlineRevenue),
+          icon: Icons.language_rounded,
+          accent: context.palette.primary, // blue
+          trend: 'Revenue',
+          trendUp: true,
+          onTap: () {},
+        ),
+        KpiCard(
+          label: 'Offline Orders',
+          value: Fmt.money0(d.offlineRevenue),
+          icon: Icons.storefront_rounded,
+          accent: context.palette.success, // green
+          trend: 'Revenue',
+          trendUp: true,
           onTap: () {},
         ),
         KpiCard(
@@ -171,6 +252,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           trendUp: d.purchasesTrendPct >= 0,
           onTap: () {},
         ),
+
         KpiCard(
           label: 'Inventory Alerts',
           value: '${d.lowStockCount} items',

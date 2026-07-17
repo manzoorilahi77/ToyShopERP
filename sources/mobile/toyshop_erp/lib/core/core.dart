@@ -3,6 +3,7 @@
 library;
 
 export 'models/account.dart';
+export 'api_config.dart';
 export 'models/product.dart';
 export 'models/status.dart';
 export 'session/app_session.dart';

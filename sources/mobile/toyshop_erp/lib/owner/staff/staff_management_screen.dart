@@ -67,9 +67,13 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
           : '${m.name} will regain Staff App access.',
     );
     if (ok != true || !mounted) return;
-    setState(() => m.isActive = !m.isActive);
+    
+    await _repo.updateActiveStatus(m.id, !m.isActive);
+    await _load();
+    
+    if (!mounted) return;
     after?.call();
-    _toast(m.isActive ? 'Staff activated' : 'Staff deactivated');
+    _toast(!m.isActive ? 'Staff activated' : 'Staff deactivated');
   }
 
   Future<void> _resetPin(StaffMember m) async {
@@ -90,6 +94,16 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     _toast('PIN reset for ${m.name}');
   }
 
+  int _getRoleId(UserRole role) {
+    switch (role) {
+      case UserRole.superAdmin: return 1;
+      case UserRole.owner: return 2;
+      case UserRole.manager: return 3;
+      case UserRole.staff: return 4;
+      default: return 4;
+    }
+  }
+
   Future<void> _openAddEdit({StaffMember? existing}) async {
     final online = SessionScope.read(context).isOnline;
     final result = await showModalBottomSheet<_StaffFormResult>(
@@ -104,30 +118,27 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
       ),
     );
     if (result == null || !mounted) return;
-    setState(() {
-      if (existing == null) {
-        final list = _staff ?? <StaffMember>[];
-        _staff = [
-          ...list,
-          StaffMember(
-            id: 'NEW-${DateTime.now().millisecondsSinceEpoch}',
-            name: result.name,
-            initials: _initialsFor(result.name),
-            color: staffAvatarColors[list.length % staffAvatarColors.length],
-            role: result.role,
-            phone: result.phone,
-            joinDate: result.joinDate,
-          ),
-        ];
-      } else {
-        existing
-          ..name = result.name
-          ..initials = _initialsFor(result.name)
-          ..role = result.role
-          ..phone = result.phone
-          ..joinDate = result.joinDate;
+    
+    final staffData = {
+      'name': result.name,
+      'email': result.email,
+      'roleId': _getRoleId(result.role),
+      'branchId': 1, // Defaulting to first branch for now
+      'phone': result.phone,
+    };
+
+    if (existing == null) {
+      staffData['password'] = result.pin;
+      await _repo.add(staffData);
+    } else {
+      if (result.pin.isNotEmpty) {
+        staffData['password'] = result.pin;
       }
-    });
+      await _repo.update(existing.id, staffData);
+    }
+    
+    await _load();
+    if (!mounted) return;
     _toast(existing == null ? 'Staff added' : 'Staff saved');
   }
 
@@ -708,13 +719,17 @@ class _StaffDetailSheet extends StatelessWidget {
 class _StaffFormResult {
   const _StaffFormResult({
     required this.name,
+    required this.email,
     required this.role,
     required this.phone,
+    required this.pin,
     required this.joinDate,
   });
   final String name;
+  final String email;
   final UserRole role;
   final String phone;
+  final String pin;
   final DateTime joinDate;
 }
 
@@ -737,6 +752,7 @@ class _StaffFormSheet extends StatefulWidget {
 
 class _StaffFormSheetState extends State<_StaffFormSheet> {
   late final TextEditingController _nameCtrl;
+  late final TextEditingController _emailCtrl;
   late final TextEditingController _phoneCtrl;
   final _pinCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
@@ -749,6 +765,7 @@ class _StaffFormSheetState extends State<_StaffFormSheet> {
 
   bool get _valid {
     if (_nameCtrl.text.trim().isEmpty) return false;
+    if (_emailCtrl.text.trim().isEmpty || !_emailCtrl.text.contains('@')) return false;
     if (!_isEdit) {
       final pin = _pinCtrl.text.trim();
       if (!RegExp(r'^\d{4,6}$').hasMatch(pin)) return false;
@@ -762,6 +779,7 @@ class _StaffFormSheetState extends State<_StaffFormSheet> {
     super.initState();
     final e = widget.existing;
     _nameCtrl = TextEditingController(text: e?.name ?? '');
+    _emailCtrl = TextEditingController(text: ''); // Demo doesn't have email
     _phoneCtrl = TextEditingController(text: e?.phone ?? '');
     _role = e?.role ?? UserRole.staff;
     _joinDate = e?.joinDate ?? widget.today;
@@ -770,6 +788,7 @@ class _StaffFormSheetState extends State<_StaffFormSheet> {
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _emailCtrl.dispose();
     _phoneCtrl.dispose();
     _pinCtrl.dispose();
     _confirmCtrl.dispose();
@@ -814,8 +833,10 @@ class _StaffFormSheetState extends State<_StaffFormSheet> {
     Navigator.of(context).pop(
       _StaffFormResult(
         name: _nameCtrl.text.trim(),
+        email: _emailCtrl.text.trim(),
         role: _role,
         phone: _phoneCtrl.text.trim(),
+        pin: _pinCtrl.text.trim(),
         joinDate: _joinDate,
       ),
     );
@@ -836,6 +857,13 @@ class _StaffFormSheetState extends State<_StaffFormSheet> {
             autofocus: !_isEdit,
             onChanged: (_) => setState(() {}),
             decoration: const InputDecoration(labelText: 'Name *'),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            controller: _emailCtrl,
+            keyboardType: TextInputType.emailAddress,
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(labelText: 'Email *'),
           ),
           const SizedBox(height: AppSpacing.md),
           DropdownButtonFormField<UserRole>(

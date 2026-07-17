@@ -38,7 +38,8 @@ class OwnerDashboardData {
     required this.alertsTrendPct,
     required this.profitEstimate,
     required this.marginPct,
-    required this.itemsSold,
+    required this.onlineRevenue,
+    required this.offlineRevenue,
     required this.salesCount,
     required this.gstLiability,
     required this.gstPeriod,
@@ -59,7 +60,8 @@ class OwnerDashboardData {
   final double alertsTrendPct;
   final double profitEstimate;
   final int marginPct;
-  final int itemsSold;
+  final double onlineRevenue;
+  final double offlineRevenue;
   final int salesCount;
   final double gstLiability;
   final String gstPeriod;
@@ -73,25 +75,32 @@ class OwnerDashboardData {
 class OwnerDashboardRepository {
   const OwnerDashboardRepository();
 
-  Future<OwnerDashboardData> load({String? branchId}) async {
+  Future<OwnerDashboardData> load({String? branchId, String? period}) async {
     // Generate some deterministic variation based on branchId
     final isFiltered = branchId != null;
     final factor = isFiltered ? (branchId.hashCode.abs() % 50 + 50) / 100.0 : 1.0;
     
     double backendSalesTotal = _demo.salesTotal * factor;
     int backendSalesCount = (_demo.salesCount * factor).round();
+    double backendOnlineRevenue = 0.0;
+    double backendOfflineRevenue = 0.0;
     int backendLowStockCount = isFiltered ? 2 : _demo.lowStockCount;
     int backendAgingStockCount = isFiltered ? 5 : _demo.agingStockCount;
     int backendUnreadNotifications = _demo.unreadNotifications;
     int backendPendingApprovals = _demo.pendingApprovals;
+    double backendProfitEstimate = _demo.profitEstimate * factor;
     TopPerformer backendTopPerformer = _demo.topPerformer;
 
     double backendPurchasesTotal = 0.0;
     try {
       final token = await StorageService.getAccessToken();
       var uri = Uri.parse(ApiConfig.dashboardOwner);
-      if (branchId != null) {
-        uri = uri.replace(queryParameters: {'branchId': branchId});
+      var queryParams = <String, String>{};
+      if (branchId != null) queryParams['branchId'] = branchId;
+      if (period != null) queryParams['period'] = period;
+
+      if (queryParams.isNotEmpty) {
+        uri = uri.replace(queryParameters: queryParams);
       }
 
       final response = await http.get(
@@ -108,8 +117,11 @@ class OwnerDashboardRepository {
           final stats = data['data'];
           backendSalesTotal = double.tryParse(stats['todayRevenue']?.toString() ?? '0') ?? 0.0;
           backendSalesCount = int.tryParse(stats['todayOrders']?.toString() ?? '0') ?? 0;
+          backendOnlineRevenue = double.tryParse(stats['onlineRevenue']?.toString() ?? '0') ?? 0.0;
+          backendOfflineRevenue = double.tryParse(stats['offlineRevenue']?.toString() ?? '0') ?? 0.0;
           backendLowStockCount = int.tryParse(stats['lowStockProducts']?.toString() ?? '0') ?? 0;
           backendPurchasesTotal = double.tryParse(stats['todayPurchases']?.toString() ?? '0') ?? 0.0;
+          backendProfitEstimate = double.tryParse(stats['profitEstimate']?.toString() ?? '0') ?? 0.0;
           
           backendAgingStockCount = int.tryParse(stats['agingStockCount']?.toString() ?? '0') ?? backendAgingStockCount;
           backendUnreadNotifications = int.tryParse(stats['unreadNotifications']?.toString() ?? '0') ?? backendUnreadNotifications;
@@ -142,9 +154,10 @@ class OwnerDashboardRepository {
       ordersTrendPct: 8.2, // Mocked from UI design
       purchasesTrendPct: -4.1, // Mocked from UI design
       alertsTrendPct: -2.0, // Mocked from UI design
-      profitEstimate: _demo.profitEstimate * factor,
+      profitEstimate: backendProfitEstimate,
       marginPct: _demo.marginPct,
-      itemsSold: (_demo.itemsSold * factor).round(),
+      onlineRevenue: backendOnlineRevenue,
+      offlineRevenue: backendOfflineRevenue,
       salesCount: backendSalesCount,
       gstLiability: _demo.gstLiability * factor,
       gstPeriod: _demo.gstPeriod,
@@ -168,7 +181,8 @@ final _demo = OwnerDashboardData(
   alertsTrendPct: -2.0,
   profitEstimate: 31210,
   marginPct: 25,
-  itemsSold: 86,
+  onlineRevenue: 1520.50,
+  offlineRevenue: 5172.49,
   salesCount: 7,
   gstLiability: 18940,
   gstPeriod: '2026-07',

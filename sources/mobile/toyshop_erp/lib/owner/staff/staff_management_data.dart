@@ -12,9 +12,12 @@
 // Reset PIN -> PATCH /staff/{id} { pin, owner_pin } (🔒, bcrypt-hashed server-side,
 // never returned). Activate/Deactivate -> PATCH /staff/{id} { is_active, owner_pin } (🔒).
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../../core/core.dart';
+import '../../core/utils/storage_service.dart';
 
 /// A single sales-staff / accountant / co-owner roster entry, plus the
 /// denormalized performance snapshot shown on the detail sheet. Mutable so the
@@ -95,8 +98,100 @@ class StaffRepository {
   const StaffRepository();
 
   Future<List<StaffMember>> staff() async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    return _demoStaff;
+    try {
+      final token = await StorageService.getAccessToken();
+      final res = await http.get(
+        Uri.parse(ApiConfig.users),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['data'] != null) {
+          final List<dynamic> items = data['data'];
+          int colorIndex = 0;
+          return items.map((item) {
+            final roleName = item['role']?['name']?.toString().toLowerCase() ?? 'staff';
+            UserRole role;
+            if (roleName.contains('owner')) role = UserRole.owner;
+            else if (roleName.contains('manager')) role = UserRole.manager;
+            else if (roleName.contains('super')) role = UserRole.superAdmin;
+            else role = UserRole.staff;
+            
+            final color = staffAvatarColors[colorIndex % staffAvatarColors.length];
+            colorIndex++;
+            
+            final name = item['name'] ?? 'Unknown';
+            final initials = name.isNotEmpty ? (name.length > 1 ? name.substring(0, 2).toUpperCase() : name.toUpperCase()) : '??';
+
+            return StaffMember(
+              id: item['id']?.toString() ?? '',
+              name: name,
+              initials: initials,
+              color: color,
+              role: role,
+              phone: item['phone'] ?? '',
+              joinDate: item['createdAt'] != null ? DateTime.parse(item['createdAt']) : DateTime.now(),
+              isActive: item['isActive'] ?? true,
+              // Performance fields are mocked for now as backend doesn't provide them
+              monthUnits: 0,
+              monthRevenue: 0,
+              points: 0,
+              rank: 0,
+              todayRevenue: 0,
+              todayUnits: 0,
+              lifetimeSales: 0,
+              badges: const [],
+              incentiveProgressPct: 0,
+              incentiveTierLabel: '',
+            );
+          }).toList();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching staff data: $e');
+    }
+    return List.unmodifiable(_demoStaff);
+  }
+  
+  Future<void> add(Map<String, dynamic> staffData) async {
+    final token = await StorageService.getAccessToken();
+    await http.post(
+      Uri.parse(ApiConfig.users),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(staffData),
+    );
+  }
+
+  Future<void> update(String id, Map<String, dynamic> staffData) async {
+    final token = await StorageService.getAccessToken();
+    await http.put(
+      Uri.parse('${ApiConfig.users}/$id'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(staffData),
+    );
+  }
+
+  Future<void> updateActiveStatus(String id, bool isActive) async {
+    final token = await StorageService.getAccessToken();
+    await http.put(
+      Uri.parse('${ApiConfig.users}/$id'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'isActive': isActive,
+      }),
+    );
   }
 
   Future<List<IncentiveRule>> rules() async {

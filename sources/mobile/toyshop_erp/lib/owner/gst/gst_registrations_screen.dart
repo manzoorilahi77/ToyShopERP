@@ -121,7 +121,11 @@ class _GstRegistrationsScreenState extends State<GstRegistrationsScreen> {
       ),
     );
     if (!mounted || result == null) return;
-    setState(() => _regs = [...(_regs ?? const []), result]);
+    
+    await _repo.add(result);
+    await _load();
+    
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${result.gstin} saved')),
     );
@@ -140,7 +144,11 @@ class _GstRegistrationsScreenState extends State<GstRegistrationsScreen> {
       ),
     );
     if (!mounted || result == null) return;
-    setState(() => _regs = [for (final reg in _regs!) reg.id == r.id ? result : reg]);
+    
+    await _repo.update(result);
+    await _load();
+    
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('GSTIN updated')),
     );
@@ -171,11 +179,17 @@ class _GstRegistrationsScreenState extends State<GstRegistrationsScreen> {
       if (ok != true) return;
     }
     if (!mounted) return;
+    
+    final updated = r.copyWith(isActive: value);
     setState(() {
       _regs = [
-        for (final reg in _regs!) reg.id == r.id ? reg.copyWith(isActive: value) : reg,
+        for (final reg in _regs!) reg.id == r.id ? updated : reg,
       ];
     });
+    
+    await _repo.update(updated);
+    
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(value ? 'GSTIN activated' : 'GSTIN deactivated')),
     );

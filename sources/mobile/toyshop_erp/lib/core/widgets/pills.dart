@@ -99,7 +99,9 @@ class StockPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final label = qty != null ? '${state.label} · $qty' : state.label;
+    final label = (state == StockState.healthy && qty != null)
+        ? '${state.label} · $qty'
+        : state.label;
     return TonePill(label: label, color: state.color(p), icon: state.icon, dense: dense);
   }
 }

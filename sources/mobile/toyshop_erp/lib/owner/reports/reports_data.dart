@@ -11,9 +11,24 @@
 // defines them; the top-products/top-staff/category-mix breakdowns are a
 // clickable-prototype extension (the doc keeps those on the web dashboard).
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../../core/core.dart';
+import '../../core/api_config.dart';
+import '../../core/utils/storage_service.dart';
+
+String? _formatImageUrl(String? url) {
+  if (url == null || url.isEmpty) return null;
+  if (url.startsWith('http://localhost:5000')) {
+    return url.replaceFirst('http://localhost:5000', 'http://127.0.0.1:5000');
+  }
+  if (url.startsWith('/')) {
+    return 'http://127.0.0.1:5000$url';
+  }
+  return url;
+}
 
 /// Sales report period — drives the segmented control at the top of Reports.
 enum ReportPeriod {
@@ -159,52 +174,137 @@ final DateTime kReportsAsOf = DateTime(2026, 7, 3, 19, 44);
 class ReportsRepository {
   const ReportsRepository();
 
+  Future<Map<String, String>> _headers() async {
+    final token = await StorageService.getAccessToken();
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
   Future<SalesSummary> salesSummary(ReportPeriod period, {String? branchId}) async {
-    await Future.delayed(const Duration(milliseconds: 250));
-    final summary = _salesByPeriod[period]!;
-    if (branchId == null || branchId == 'all') return summary;
+    final uri = Uri.parse('${ApiConfig.reportsSalesSummary}?period=${period.apiValue}');
+    final res = await http.get(uri, headers: await _headers());
+    if (res.statusCode != 200) throw Exception('Failed to load sales summary');
     
-    // Simulate branch-specific data by scaling down totals
-    final factor = 0.3 + (branchId.hashCode % 50) / 100;
+    final data = jsonDecode(res.body)['data'];
     return SalesSummary(
-      salesTotal: summary.salesTotal * factor,
-      profitEstimate: summary.profitEstimate * factor,
-      itemsSold: (summary.itemsSold * factor).round(),
-      salesCount: (summary.salesCount * factor).round(),
-      trendPct: summary.trendPct, // trend can remain the same
-      series: summary.series.map((s) => SalesPoint(label: s.label, value: s.value * factor)).toList(),
+      salesTotal: (data['salesTotal'] as num?)?.toDouble() ?? 0.0,
+      profitEstimate: (data['profitEstimate'] as num?)?.toDouble() ?? 0.0,
+      itemsSold: (data['itemsSold'] as num?)?.toInt() ?? 0,
+      salesCount: (data['salesCount'] as num?)?.toInt() ?? 0,
+      trendPct: (data['trendPct'] as num?)?.toDouble() ?? 0.0,
+      series: (data['series'] as List? ?? []).map((s) => SalesPoint(
+        label: s['label'],
+        value: (s['value'] as num?)?.toDouble() ?? 0.0,
+      )).toList(),
     );
   }
 
   Future<List<TopProductStat>> topProducts(ReportPeriod period) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return _topProductsByPeriod[period]!;
+    final uri = Uri.parse('${ApiConfig.reportsTopProducts}?period=${period.apiValue}');
+    final res = await http.get(uri, headers: await _headers());
+    if (res.statusCode != 200) return _topProductsByPeriod[period] ?? [];
+    
+    final List data = jsonDecode(res.body)['data'] ?? [];
+    return data.map((item) => TopProductStat(
+      product: Product(
+        id: item['id'].toString(),
+        name: item['name'],
+        category: item['category'],
+        price: (item['price'] as num?)?.toDouble() ?? 0.0,
+        stockQty: (item['stock'] as num?)?.toInt() ?? 0,
+        image: _formatImageUrl(item['image']),
+        colorTag: const Color(0xFF2563EB), // Default color
+      ),
+      unitsSold: (item['unitsSold'] as num?)?.toInt() ?? 0,
+      revenue: (item['revenue'] as num?)?.toDouble() ?? 0.0,
+    )).toList();
   }
 
   Future<List<TopStaffStat>> topStaff(ReportPeriod period) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return _topStaffByPeriod[period]!;
+    final uri = Uri.parse('${ApiConfig.reportsTopStaff}?period=${period.apiValue}');
+    final res = await http.get(uri, headers: await _headers());
+    if (res.statusCode != 200) return _topStaffByPeriod[period] ?? [];
+    
+    final List data = jsonDecode(res.body)['data'] ?? [];
+    return data.map((item) => TopStaffStat(
+      name: item['name'],
+      initials: item['initials'],
+      color: Colors.blue,
+      revenue: (item['revenue'] as num?)?.toDouble() ?? 0.0,
+      unitsSold: (item['unitsSold'] as num?)?.toInt() ?? 0,
+      salesCount: (item['salesCount'] as num?)?.toInt() ?? 0,
+    )).toList();
   }
 
   Future<List<CategoryShare>> categoryMix(ReportPeriod period) async {
-    await Future.delayed(const Duration(milliseconds: 220));
-    return _categoryByPeriod[period]!;
+    final uri = Uri.parse('${ApiConfig.reportsCategoryMix}?period=${period.apiValue}');
+    final res = await http.get(uri, headers: await _headers());
+    if (res.statusCode != 200) return _categoryByPeriod[period] ?? [];
+    
+    final List data = jsonDecode(res.body)['data'] ?? [];
+    return data.map((item) => CategoryShare(
+      category: item['category'],
+      color: Colors.primaries[data.indexOf(item) % Colors.primaries.length],
+      value: (item['value'] as num?)?.toDouble() ?? 0.0,
+    )).toList();
   }
 
   Future<List<AgingStockItem>> agingStock(AgingThreshold threshold) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return _agingDemo.where((a) => a.daysInStock >= threshold.days).toList()
-      ..sort((a, b) => b.daysInStock.compareTo(a.daysInStock));
+    final uri = Uri.parse('${ApiConfig.reportsAgingStock}?threshold_days=${threshold.days}');
+    final res = await http.get(uri, headers: await _headers());
+    if (res.statusCode != 200) return [];
+    
+    final List data = jsonDecode(res.body)['data'] ?? [];
+    return data.map((item) => AgingStockItem(
+      product: Product(
+        id: item['id'].toString(),
+        name: item['name'],
+        category: item['category'],
+        price: (item['price'] as num?)?.toDouble() ?? 0.0,
+        stockQty: (item['stock'] as num?)?.toInt() ?? 0,
+        colorTag: const Color(0xFF2563EB),
+      ),
+      daysInStock: (item['daysInStock'] as num?)?.toInt() ?? 0,
+      tiedValue: (item['tiedValue'] as num?)?.toDouble() ?? 0.0,
+    )).toList();
   }
 
   Future<List<LowStockItem>> lowStock() async {
-    await Future.delayed(const Duration(milliseconds: 260));
-    return _lowStockDemo;
+    final uri = Uri.parse(ApiConfig.reportsLowStock);
+    final res = await http.get(uri, headers: await _headers());
+    if (res.statusCode != 200) return [];
+    
+    final List data = jsonDecode(res.body)['data'] ?? [];
+    return data.map((item) => LowStockItem(
+      product: Product(
+        id: item['id'].toString(),
+        name: item['name'],
+        category: item['category'],
+        price: (item['price'] as num?)?.toDouble() ?? 0.0,
+        stockQty: (item['stock'] as num?)?.toInt() ?? 0,
+        colorTag: const Color(0xFF2563EB),
+      ),
+      onHand: (item['onHand'] as num?)?.toInt() ?? 0,
+      reorderThreshold: (item['reorderThreshold'] as num?)?.toInt() ?? 0,
+      oversold: item['oversold'] ?? false,
+    )).toList();
   }
 
   Future<List<GstSnapshotRow>> gstSnapshot() async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    return _gstDemo;
+    final uri = Uri.parse(ApiConfig.reportsGstSnapshot);
+    final res = await http.get(uri, headers: await _headers());
+    if (res.statusCode != 200) return [];
+    
+    final List data = jsonDecode(res.body)['data'] ?? [];
+    return data.map((item) => GstSnapshotRow(
+      gstin: item['gstin'],
+      outputGst: (item['outputGst'] as num?)?.toDouble() ?? 0.0,
+      itc: (item['itc'] as num?)?.toDouble() ?? 0.0,
+      netPayable: (item['netPayable'] as num?)?.toDouble() ?? 0.0,
+      itcRiskCount: (item['itcRiskCount'] as num?)?.toInt() ?? 0,
+    )).toList();
   }
 }
 

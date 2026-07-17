@@ -24,6 +24,7 @@ const superAdminRoutes = require('./routes/superAdminRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const onlineOrderRoutes = require('./routes/onlineOrderRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 const app = express();
 
 // Middlewares
@@ -50,6 +51,7 @@ app.use('/api/v1/gst-registrations', gstRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/superadmin', superAdminRoutes);
+app.use('/api/v1/reports', reportRoutes);
 
 // Customer Facing APIs
 app.use('/api/v1/customers', customerRoutes);

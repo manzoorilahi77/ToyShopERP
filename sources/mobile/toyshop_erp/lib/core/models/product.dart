@@ -24,6 +24,7 @@ class Product {
     this.icon = Icons.toys_rounded,
     this.isFavorite = false,
     this.gstRate = 18,
+    this.image,
   });
 
   final String id;
@@ -42,8 +43,9 @@ class Product {
   final IconData icon;
   final bool isFavorite;
   final int gstRate;
+  final String? image;
 
-  Product copyWith({bool? isFavorite, StockState? stock, int? stockQty, double? price}) {
+  Product copyWith({bool? isFavorite, StockState? stock, int? stockQty, double? price, String? image}) {
     return Product(
       id: id,
       name: name,
@@ -59,6 +61,7 @@ class Product {
       icon: icon,
       isFavorite: isFavorite ?? this.isFavorite,
       gstRate: gstRate,
+      image: image ?? this.image,
     );
   }
 }

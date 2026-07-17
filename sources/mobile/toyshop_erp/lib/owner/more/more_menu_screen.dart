@@ -6,6 +6,7 @@ import '../catalog/product_catalog_management_screen.dart';
 import '../gst/gst_registrations_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../staff/staff_management_screen.dart';
+import '../settings/settings_screen.dart';
 
 /// Owner "More" tab — hub to the secondary owner screens that don't fit the
 /// bottom nav (Catalog, Staff, GST, Notifications), plus profile + sign out.
@@ -55,7 +56,7 @@ class OwnerMoreScreen extends StatelessWidget {
           _tile(context, Icons.notifications_rounded, 'Notifications',
               'Alerts, approvals, sync events', const NotificationsScreen()),
           const SizedBox(height: 18),
-          _tile(context, Icons.settings_rounded, 'Settings', 'App & shop preferences', null),
+          _tile(context, Icons.settings_rounded, 'Settings', 'App & shop preferences', const SettingsScreen()),
           const SizedBox(height: 8),
           Material(
             color: p.danger.withValues(alpha: 0.08),

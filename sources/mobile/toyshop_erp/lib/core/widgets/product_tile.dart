@@ -27,7 +27,26 @@ class ProductThumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = product.colorTag;
-    final thumb = DecoratedBox(
+    Widget thumb;
+    if (product.image != null && product.image!.isNotEmpty) {
+      thumb = ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: Image.network(
+          product.image!,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildPlaceholder(c, radius),
+        ),
+      );
+    } else {
+      thumb = _buildPlaceholder(c, radius);
+    }
+    
+    if (size != null) return SizedBox(width: size, height: size, child: thumb);
+    return AspectRatio(aspectRatio: 1, child: thumb);
+  }
+
+  Widget _buildPlaceholder(Color c, double radius) {
+    return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
         gradient: LinearGradient(
@@ -55,8 +74,6 @@ class ProductThumb extends StatelessWidget {
         ],
       ),
     );
-    if (size != null) return SizedBox(width: size, height: size, child: thumb);
-    return AspectRatio(aspectRatio: 1, child: thumb);
   }
 }
 

@@ -36,7 +36,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void _markAllRead() {
     setState(() {
       for (final n in _data!) {
-        n.isRead = true;
+        if (!n.isRead) {
+          n.isRead = true;
+          _repo.markRead(n.id);
+        }
       }
     });
     ScaffoldMessenger.of(context).showSnackBar(
@@ -46,7 +49,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   /// Tap = mark read + deep-link in one gesture (doc §7/§8 rule 2).
   void _open(AppNotification n) {
-    setState(() => n.isRead = true);
+    if (!n.isRead) {
+      setState(() => n.isRead = true);
+      _repo.markRead(n.id);
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Opening ${n.type.target}…')),
     );
@@ -54,6 +60,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   void _toggleRead(AppNotification n) {
     setState(() => n.isRead = !n.isRead);
+    if (n.isRead) {
+      _repo.markRead(n.id);
+    }
   }
 
   void _showTimestamp(AppNotification n) {

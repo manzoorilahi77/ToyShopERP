@@ -47,7 +47,22 @@ class _BranchesScreenState extends State<BranchesScreen> {
                   subtitle: Text(branch.location),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_rounded),
-                    onPressed: () => branchesData.removeBranch(branch.id),
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (c) => AlertDialog(
+                          title: const Text('Delete Branch'),
+                          content: const Text('Are you sure you want to delete this branch?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+                            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Delete')),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        await branchesData.removeBranch(branch.id);
+                      }
+                    },
                   ),
                 ),
               );
@@ -70,16 +85,26 @@ class _AddBranchSheetState extends State<_AddBranchSheet> {
   final _nameCtrl = TextEditingController();
   final _locationCtrl = TextEditingController();
 
-  void _save() {
+  bool _busy = false;
+
+  Future<void> _save() async {
     if (_nameCtrl.text.trim().isEmpty || _locationCtrl.text.trim().isEmpty) return;
     
+    setState(() => _busy = true);
     final newBranch = Branch(
-      id: 'b${DateTime.now().millisecondsSinceEpoch}',
+      id: '', // Backend assigns ID
       name: _nameCtrl.text.trim(),
       location: _locationCtrl.text.trim(),
     );
-    branchesData.addBranch(newBranch);
-    Navigator.pop(context);
+    try {
+      await branchesData.addBranch(newBranch);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add branch: $e')));
+        setState(() => _busy = false);
+      }
+    }
   }
 
   @override
@@ -109,8 +134,8 @@ class _AddBranchSheetState extends State<_AddBranchSheet> {
               ),
               const SizedBox(height: 24),
               FilledButton(
-                onPressed: _save,
-                child: const Text('Save Branch'),
+                onPressed: _busy ? null : _save,
+                child: Text(_busy ? 'Saving...' : 'Save Branch'),
               ),
             ],
           ),
