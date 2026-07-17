@@ -13,7 +13,7 @@ class ProductCatalogManagementScreen extends StatefulWidget {
   State<ProductCatalogManagementScreen> createState() => _ProductCatalogManagementScreenState();
 }
 
-enum _ActiveFilter { active, inactive, all }
+enum _StockFilter { all, inStock, lowStock, outOfStock, oldStock }
 
 class _ProductCatalogManagementScreenState extends State<ProductCatalogManagementScreen> {
   final _repo = const ProductCatalogRepository();
@@ -25,7 +25,7 @@ class _ProductCatalogManagementScreenState extends State<ProductCatalogManagemen
 
   String _query = '';
   String? _categoryFilter;
-  _ActiveFilter _activeFilter = _ActiveFilter.active;
+  _StockFilter _stockFilter = _StockFilter.all;
 
   @override
   void initState() {
@@ -57,8 +57,13 @@ class _ProductCatalogManagementScreenState extends State<ProductCatalogManagemen
     final q = _query.trim().toLowerCase();
     return products.where((p) {
       final meta = _meta[p.id] ?? const CatalogMeta();
-      if (_activeFilter == _ActiveFilter.active && !meta.isActive) return false;
-      if (_activeFilter == _ActiveFilter.inactive && meta.isActive) return false;
+      if (_stockFilter == _StockFilter.inStock && p.stockQty == 0) return false;
+      if (_stockFilter == _StockFilter.outOfStock && p.stockQty != 0) return false;
+      if (_stockFilter == _StockFilter.lowStock && p.stock != StockState.low) return false;
+      if (_stockFilter == _StockFilter.oldStock) {
+        if (p.stockQty == 0) return false;
+        if (meta.createdAt == null || DateTime.now().difference(meta.createdAt!).inDays < 60) return false;
+      }
       if (_categoryFilter != null && p.category != _categoryFilter) return false;
       if (q.isEmpty) return true;
       return p.name.toLowerCase().contains(q) ||
@@ -160,9 +165,11 @@ class _ProductCatalogManagementScreenState extends State<ProductCatalogManagemen
           Wrap(
             spacing: 8,
             children: [
-              _activeChip(_ActiveFilter.active, 'Active'),
-              _activeChip(_ActiveFilter.inactive, 'Inactive'),
-              _activeChip(_ActiveFilter.all, 'All'),
+              _stockFilterChip(_StockFilter.all, 'All'),
+              _stockFilterChip(_StockFilter.inStock, 'In Stock'),
+              _stockFilterChip(_StockFilter.lowStock, 'Low Stock'),
+              _stockFilterChip(_StockFilter.outOfStock, 'Out of Stock'),
+              _stockFilterChip(_StockFilter.oldStock, 'Old Stock'),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -197,9 +204,9 @@ class _ProductCatalogManagementScreenState extends State<ProductCatalogManagemen
     );
   }
 
-  Widget _activeChip(_ActiveFilter value, String label) {
+  Widget _stockFilterChip(_StockFilter value, String label) {
     final p = context.palette;
-    final selected = _activeFilter == value;
+    final selected = _stockFilter == value;
     return ChoiceChip(
       selected: selected,
       label: Text(label),
@@ -209,7 +216,7 @@ class _ProductCatalogManagementScreenState extends State<ProductCatalogManagemen
       ),
       selectedColor: p.primary,
       side: BorderSide(color: selected ? p.primary : p.border),
-      onSelected: (_) => setState(() => _activeFilter = value),
+      onSelected: (_) => setState(() => _stockFilter = value),
     );
   }
 
@@ -266,7 +273,7 @@ class _ProductCatalogManagementScreenState extends State<ProductCatalogManagemen
         _query = '';
         _searchCtrl.clear();
         _categoryFilter = null;
-        _activeFilter = _ActiveFilter.active;
+        _stockFilter = _StockFilter.all;
       }),
     );
   }

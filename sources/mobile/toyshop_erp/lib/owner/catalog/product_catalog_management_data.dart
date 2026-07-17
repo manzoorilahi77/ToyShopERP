@@ -29,6 +29,7 @@ class CatalogMeta {
     this.reorderThreshold = 3,
     this.agingThresholdDays,
     this.lastSoldAt,
+    this.createdAt,
   });
 
   final bool isActive;
@@ -39,6 +40,7 @@ class CatalogMeta {
   final int reorderThreshold;
   final int? agingThresholdDays;
   final DateTime? lastSoldAt;
+  final DateTime? createdAt;
 
   CatalogMeta copyWith({
     bool? isActive,
@@ -49,6 +51,7 @@ class CatalogMeta {
     int? reorderThreshold,
     int? agingThresholdDays,
     DateTime? lastSoldAt,
+    DateTime? createdAt,
   }) {
     return CatalogMeta(
       isActive: isActive ?? this.isActive,
@@ -59,6 +62,7 @@ class CatalogMeta {
       reorderThreshold: reorderThreshold ?? this.reorderThreshold,
       agingThresholdDays: agingThresholdDays ?? this.agingThresholdDays,
       lastSoldAt: lastSoldAt ?? this.lastSoldAt,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }
@@ -187,6 +191,7 @@ class ProductCatalogRepository {
             _apiProducts.add(p);
             _apiMeta[p.id] = CatalogMeta(
               isActive: item['isActive'] ?? true,
+              createdAt: item['createdAt'] != null ? DateTime.tryParse(item['createdAt']) : DateTime.now(),
             );
           }
           return List.unmodifiable(_apiProducts);
