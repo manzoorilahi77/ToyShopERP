@@ -121,6 +121,9 @@ class ProfilePreferences {
 /// the leaderboard snapshot + the (proposed) `staff_favorites` cache.
 class StaffProfileData {
   const StaffProfileData({
+    required this.name,
+    required this.roleLabel,
+    this.joinDate,
     required this.stats,
     required this.badges,
     required this.favorites,
@@ -128,6 +131,10 @@ class StaffProfileData {
     required this.tier,
     required this.preferences,
   });
+
+  final String name;
+  final String roleLabel;
+  final DateTime? joinDate;
 
   final ProfileStats stats;
   final List<ProfileBadge> badges;
@@ -145,7 +152,7 @@ class StaffProfileData {
 class StaffProfileRepository {
   const StaffProfileRepository();
 
-  Future<StaffProfileData> load() async {
+  Future<StaffProfileData> load(String userId) async {
     try {
       final token = await StorageService.getAccessToken();
       final headers = {
@@ -156,6 +163,21 @@ class StaffProfileRepository {
       var lifetimeUnits = 0;
       var lifetimeSales = 0.0;
       var monthPoints = 0;
+      var backendName = 'Unknown';
+      var backendRole = 'Staff';
+      DateTime? backendJoinDate;
+
+      // 1. Fetch User details
+      final userRes = await http.get(Uri.parse('${ApiConfig.users}/$userId'), headers: headers);
+      if (userRes.statusCode == 200) {
+        final data = jsonDecode(userRes.body);
+        if (data['success'] == true && data['data'] != null) {
+          final u = data['data'];
+          backendName = u['name'] ?? backendName;
+          if (u['role'] != null) backendRole = u['role']['name'] ?? backendRole;
+          if (u['createdAt'] != null) backendJoinDate = DateTime.tryParse(u['createdAt']);
+        }
+      }
       
       final dashRes = await http.get(Uri.parse(ApiConfig.dashboardStaff), headers: headers);
       if (dashRes.statusCode == 200) {
@@ -200,6 +222,9 @@ class StaffProfileRepository {
       }
 
       return StaffProfileData(
+        name: backendName,
+        roleLabel: backendRole,
+        joinDate: backendJoinDate,
         stats: ProfileStats(
           lifetimeUnits: lifetimeUnits,
           lifetimeSales: lifetimeSales,
@@ -228,6 +253,9 @@ class StaffProfileRepository {
 }
 
 final _demo = StaffProfileData(
+  name: 'Jane Smith',
+  roleLabel: 'Staff',
+  joinDate: DateTime(2023, 10, 12),
   stats: ProfileStats(
     lifetimeUnits: 3186,
     lifetimeSales: 842300,

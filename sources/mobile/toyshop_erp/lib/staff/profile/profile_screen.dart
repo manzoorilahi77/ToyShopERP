@@ -27,15 +27,19 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _repo.load().then((d) {
-      if (!mounted) return;
-      setState(() {
-        _data = d;
-        _favorites = List.of(d.favorites);
-        _catalog = List.of(d.favoriteCatalog);
-        _biometricOn = d.preferences.biometricEnabled;
-        _biometricEnrolled = d.preferences.biometricEnrolled;
-        _language = d.preferences.voiceLanguage;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final account = SessionScope.of(context).account;
+      if (account == null) return;
+      _repo.load(account.id).then((d) {
+        if (!mounted) return;
+        setState(() {
+          _data = d;
+          _favorites = List.of(d.favorites);
+          _catalog = List.of(d.favoriteCatalog);
+          _biometricOn = d.preferences.biometricEnabled;
+          _biometricEnrolled = d.preferences.biometricEnrolled;
+          _language = d.preferences.voiceLanguage;
+        });
       });
     });
   }
@@ -82,14 +86,14 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
           ? _loading()
           : RefreshIndicator(
               onRefresh: () async {
-                final d = await _repo.load();
+                final d = await _repo.load(account.id);
                 if (!mounted) return;
                 setState(() => _data = d);
               },
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 children: [
-                  _header(account, data.stats),
+                  _header(account, data),
                   const SizedBox(height: 14),
                   _kpiGrid(data.stats),
                   const SizedBox(height: 20),
@@ -151,7 +155,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
 
   // ---- Header ------------------------------------------------------------
 
-  Widget _header(Account account, ProfileStats stats) {
+  Widget _header(Account account, StaffProfileData data) {
     final p = context.palette;
     return AppCard(
       child: Row(
@@ -162,18 +166,18 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(account.name, style: AppType.h2.copyWith(color: p.ink)),
+                Text(data.name, style: AppType.h2.copyWith(color: p.ink)),
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    TonePill.tone(Tone.info, account.roleLabel,
+                    TonePill.tone(Tone.info, data.roleLabel,
                         icon: Icons.shield_rounded, dense: true),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        account.joinDate == null
+                        data.joinDate == null
                             ? 'Join date —'
-                            : 'Joined ${Fmt.dateMed(account.joinDate!)}',
+                            : 'Joined ${Fmt.dateMed(data.joinDate!)}',
                         style: AppType.caption.copyWith(color: p.inkMuted),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
