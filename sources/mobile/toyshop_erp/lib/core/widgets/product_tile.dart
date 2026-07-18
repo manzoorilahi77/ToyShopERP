@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../api_config.dart';
 import '../models/product.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -28,21 +29,32 @@ class ProductThumb extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = product.colorTag;
     Widget thumb;
-    if (product.image != null && product.image!.isNotEmpty) {
+    final fixedImage = ApiConfig.fixImageUrl(product.image);
+    if (fixedImage.isNotEmpty) {
       thumb = ClipRRect(
         borderRadius: BorderRadius.circular(radius),
         child: Image.network(
-          product.image!,
+          fixedImage,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildPlaceholder(c, radius),
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return _buildShimmer(c, radius);
+          },
+          errorBuilder: (context, error, stackTrace) =>
+              _buildPlaceholder(c, radius),
         ),
       );
     } else {
       thumb = _buildPlaceholder(c, radius);
     }
-    
+
     if (size != null) return SizedBox(width: size, height: size, child: thumb);
     return AspectRatio(aspectRatio: 1, child: thumb);
+  }
+
+  /// Animated shimmer shown only on first download (disk-cached after that).
+  Widget _buildShimmer(Color c, double radius) {
+    return _ShimmerBox(radius: radius, color: c);
   }
 
   Widget _buildPlaceholder(Color c, double radius) {
@@ -398,6 +410,48 @@ class _ItemConfirmCardState extends State<ItemConfirmCard> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Pulsing shimmer rectangle — shown only the very first time an image is
+/// downloaded. All subsequent loads are instant from the disk cache.
+class _ShimmerBox extends StatefulWidget {
+  const _ShimmerBox({required this.radius, required this.color});
+  final double radius;
+  final Color color;
+
+  @override
+  State<_ShimmerBox> createState() => _ShimmerBoxState();
+}
+
+class _ShimmerBoxState extends State<_ShimmerBox>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, __) => DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.radius),
+          color: Color.lerp(
+            widget.color.withValues(alpha: 0.10),
+            widget.color.withValues(alpha: 0.22),
+            _c.value,
+          ),
+        ),
       ),
     );
   }

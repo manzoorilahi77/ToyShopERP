@@ -243,12 +243,36 @@ exports.getStaffDashboard = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const week = new Date();
+    week.setDate(week.getDate() - week.getDay());
+    week.setHours(0, 0, 0, 0);
+
+    const month = new Date();
+    month.setDate(1);
+    month.setHours(0, 0, 0, 0);
+
     const myTodaySales = await Sale.count({
       where: { userId, createdAt: { [Op.gte]: today } }
     });
 
     const myTodayRevenue = await Sale.sum('totalAmount', {
       where: { userId, createdAt: { [Op.gte]: today } }
+    });
+
+    const myWeekSales = await Sale.count({
+      where: { userId, createdAt: { [Op.gte]: week } }
+    });
+
+    const myWeekRevenue = await Sale.sum('totalAmount', {
+      where: { userId, createdAt: { [Op.gte]: week } }
+    });
+
+    const myMonthSales = await Sale.count({
+      where: { userId, createdAt: { [Op.gte]: month } }
+    });
+
+    const myMonthRevenue = await Sale.sum('totalAmount', {
+      where: { userId, createdAt: { [Op.gte]: month } }
     });
 
     const myLifetimeSales = await Sale.count({ where: { userId } });
@@ -264,6 +288,10 @@ exports.getStaffDashboard = async (req, res) => {
     return successResponse(res, 200, 'Staff dashboard stats', {
       salesToday: myTodaySales || 0,
       revenueToday: myTodayRevenue || 0,
+      salesWeek: myWeekSales || 0,
+      revenueWeek: myWeekRevenue || 0,
+      salesMonth: myMonthSales || 0,
+      revenueMonth: myMonthRevenue || 0,
       points: user ? user.points : 0,
       lifetimeUnits: myLifetimeUnits || 0,
       lifetimeRevenue: myLifetimeRevenue || 0,

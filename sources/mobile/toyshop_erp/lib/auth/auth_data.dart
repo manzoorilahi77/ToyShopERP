@@ -10,8 +10,11 @@ class AuthRepository {
   const AuthRepository();
 
   Future<List<Account>> fetchRoster() async {
+    final url = ApiConfig.authPublicUsers;
+    debugPrint('[AuthRepo] fetchRoster → $url');
     try {
-      final response = await http.get(Uri.parse(ApiConfig.authPublicUsers));
+      final response = await http.get(Uri.parse(url));
+      debugPrint('[AuthRepo] fetchRoster ← status=${response.statusCode}');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['data'] != null) {
@@ -20,12 +23,15 @@ class AuthRepository {
               .map((json) => Account.fromJson(json))
               .where((a) => a.role == UserRole.owner || a.role == UserRole.staff)
               .toList();
+          debugPrint('[AuthRepo] fetchRoster found ${accounts.length} accounts');
           return accounts;
+        } else {
+          debugPrint('[AuthRepo] fetchRoster bad payload: ${response.body.substring(0, 200)}');
         }
       }
       return [];
-    } catch (e) {
-      debugPrint('Error fetching roster: $e');
+    } catch (e, st) {
+      debugPrint('[AuthRepo] fetchRoster ERROR: $e\n$st');
       return [];
     }
   }

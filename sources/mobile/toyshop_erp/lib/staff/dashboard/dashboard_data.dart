@@ -99,6 +99,10 @@ class StaffDashboardRepository {
       final dashRes = await http.get(Uri.parse(ApiConfig.dashboardStaff), headers: headers);
       var dayUnits = 0;
       var dayRev = 0.0;
+      var weekUnits = 0;
+      var weekRev = 0.0;
+      var monthUnits = 0;
+      var monthRev = 0.0;
       var lifetimeUnits = 0;
       var currentPoints = 0;
       if (dashRes.statusCode == 200) {
@@ -107,6 +111,10 @@ class StaffDashboardRepository {
           final stats = data['data'];
           dayUnits = stats['salesToday'] ?? 0;
           dayRev = double.tryParse((stats['revenueToday'] ?? '0').toString()) ?? 0.0;
+          weekUnits = stats['salesWeek'] ?? 0;
+          weekRev = double.tryParse((stats['revenueWeek'] ?? '0').toString()) ?? 0.0;
+          monthUnits = stats['salesMonth'] ?? 0;
+          monthRev = double.tryParse((stats['revenueMonth'] ?? '0').toString()) ?? 0.0;
           lifetimeUnits = stats['lifetimeUnits'] ?? 0;
           currentPoints = stats['points'] ?? 0;
         }
@@ -155,15 +163,15 @@ class StaffDashboardRepository {
         asOf: DateTime.now(),
         stats: {
           DashPeriod.day: PeriodStat(units: dayUnits, revenue: dayRev, trendPct: 0),
-          DashPeriod.week: PeriodStat(units: _demo.stats[DashPeriod.week]!.units, revenue: _demo.stats[DashPeriod.week]!.revenue, trendPct: _demo.stats[DashPeriod.week]!.trendPct),
-          DashPeriod.month: PeriodStat(units: lifetimeUnits, revenue: _demo.stats[DashPeriod.month]!.revenue, trendPct: _demo.stats[DashPeriod.month]!.trendPct),
+          DashPeriod.week: PeriodStat(units: weekUnits, revenue: weekRev, trendPct: 0),
+          DashPeriod.month: PeriodStat(units: monthUnits, revenue: monthRev, trendPct: 0),
         },
-        leaderboard: leaderboard.isEmpty ? _demo.leaderboard : leaderboard,
+        leaderboard: leaderboard,
         incentive: IncentiveProgress(
           current: lifetimeUnits, target: 500, unitLabel: 'units', rewardLabel: '₹1,000 bonus',
         ),
-        badges: _demo.badges,
-        quickPicks: quickPicks.isEmpty ? _demo.quickPicks : quickPicks,
+        badges: _demo.badges, // Badges are typically predefined rules
+        quickPicks: quickPicks,
       );
     } catch (e) {
       debugPrint('Error loading staff dashboard: $e');

@@ -1,33 +1,50 @@
+import 'app_env.dart';
+
 class ApiConfig {
-  // Use 10.0.2.2 for Android emulator to connect to local backend,
-  // or localhost/127.0.0.1 for iOS simulator.
-  // For physical devices via USB debugging, we use adb reverse and 127.0.0.1
-  static const String baseUrl = 'http://10.0.2.2:5000/api/v1';
+  ApiConfig._();
 
-  static const String authPublicUsers = '$baseUrl/auth/users';
-  static const String authLogin = '$baseUrl/auth/login';
-  static const String authRefreshToken = '$baseUrl/auth/refresh-token';
+  // The host is resolved at runtime:
+  //   • Android emulator  → 10.0.2.2  (host loopback alias)
+  //   • Physical device   → 127.0.0.1 (adb reverse is set up automatically)
+  //   • iOS simulator     → 127.0.0.1
+  static String get _host => AppEnv.localHost;
 
-  static const String dashboardOwner = '$baseUrl/dashboard/owner';
-  static const String dashboardStaff = '$baseUrl/dashboard/staff';
-  
-  static const String products = '$baseUrl/products';
-  static const String categories = '$baseUrl/categories';
-  static const String branches = '$baseUrl/branches';
-  static const String sales = '$baseUrl/sales';
-  static const String salesMySales = '$baseUrl/sales/my-sales';
-  
-  static const String reportsSalesSummary = '$baseUrl/reports/sales-summary';
-  static const String reportsTopProducts = '$baseUrl/reports/top-products';
-  static const String reportsTopStaff = '$baseUrl/reports/top-staff';
-  static const String reportsCategoryMix = '$baseUrl/reports/category-mix';
-  static const String reportsAgingStock = '$baseUrl/reports/aging-stock';
-  static const String reportsLowStock = '$baseUrl/reports/low-stock';
-  static const String reportsGstSnapshot = '$baseUrl/reports/gst-snapshot';
-  static const String reportsGst = '$baseUrl/reports/gst';
+  static String get baseUrl => 'http://$_host:5000/api/v1';
 
-  static const String gst = '$baseUrl/gst-registrations';
-  static const String notifications = '$baseUrl/notifications';
-  static const String users = '$baseUrl/users';
-  static const String usersLeaderboard = '$baseUrl/users/leaderboard';
+  static String get authPublicUsers => '$baseUrl/auth/users';
+  static String get authLogin => '$baseUrl/auth/login';
+  static String get authRefreshToken => '$baseUrl/auth/refresh-token';
+
+  static String get dashboardOwner => '$baseUrl/dashboard/owner';
+  static String get dashboardStaff => '$baseUrl/dashboard/staff';
+
+  static String get products => '$baseUrl/products';
+  static String get categories => '$baseUrl/categories';
+  static String get branches => '$baseUrl/branches';
+  static String get sales => '$baseUrl/sales';
+  static String get salesMySales => '$baseUrl/sales/my-sales';
+
+  static String get reportsSalesSummary => '$baseUrl/reports/sales-summary';
+  static String get reportsTopProducts => '$baseUrl/reports/top-products';
+  static String get reportsTopStaff => '$baseUrl/reports/top-staff';
+  static String get reportsCategoryMix => '$baseUrl/reports/category-mix';
+  static String get reportsAgingStock => '$baseUrl/reports/aging-stock';
+  static String get reportsLowStock => '$baseUrl/reports/low-stock';
+  static String get reportsGstSnapshot => '$baseUrl/reports/gst-snapshot';
+  static String get reportsGst => '$baseUrl/reports/gst';
+
+  static String get gst => '$baseUrl/gst-registrations';
+  static String get notifications => '$baseUrl/notifications';
+  static String get users => '$baseUrl/users';
+  static String get usersLeaderboard => '$baseUrl/users/leaderboard';
+
+  /// Re-writes a URL that was stored in the DB as `http://localhost:5000/...`
+  /// so it points to the correct host for the current environment.
+  static String fixImageUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    return url.replaceFirst(
+      RegExp(r'http://(localhost|127\.0\.0\.1|10\.0\.2\.2)'),
+      'http://$_host',
+    );
+  }
 }
