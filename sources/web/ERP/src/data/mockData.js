@@ -6,6 +6,10 @@ export const CATEGORIES = [
   { id: 'cat3', name: 'Plushies', icon: 'heart', color: 'bg-pink-500' },
   { id: 'cat4', name: 'Puzzles', icon: 'puzzle', color: 'bg-green-500' },
   { id: 'cat5', name: 'Vehicles', icon: 'car', color: 'bg-yellow-500' },
+  { id: 'cat6', name: 'Cars', icon: 'car-front', color: 'bg-orange-500' },
+  { id: 'cat7', name: 'Robot Toys', icon: 'bot', color: 'bg-indigo-500' },
+  { id: 'cat8', name: 'Educational', icon: 'book', color: 'bg-teal-500' },
+  { id: 'cat9', name: 'Building Blocks', icon: 'box', color: 'bg-purple-500' },
 ];
 
 export const CATALOG = [

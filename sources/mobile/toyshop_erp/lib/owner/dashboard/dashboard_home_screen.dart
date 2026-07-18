@@ -217,12 +217,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           onTap: () {},
         ),
         KpiCard(
-          label: 'Profit (Est.)',
-          value: Fmt.money0(d.profitEstimate),
-          icon: Icons.auto_graph_rounded,
+          label: 'Total Orders',
+          value: d.salesCount.toString(),
+          icon: Icons.receipt_long_rounded,
           accent: context.palette.success, // green
-          trend: 'Margin: ${d.marginPct}%',
-          trendUp: true,
+          trend: '${d.ordersTrendPct.abs().toStringAsFixed(1)}% vs last month',
+          trendUp: d.ordersTrendPct >= 0,
           onTap: () {},
         ),
         KpiCard(
@@ -336,8 +336,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           ActionChip(
             avatar: Icon(icon, size: 18, color: context.palette.primary),
             label: Text(label),
-            onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => screenBuilder()));
+            onPressed: () async {
+              await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screenBuilder()));
+              _loadData();
             },
           ),
       ],

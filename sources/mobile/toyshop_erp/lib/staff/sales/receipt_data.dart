@@ -49,11 +49,11 @@ class ReceiptLine {
   /// owner can spot it during review.
   final bool priceOverridden;
 
-  /// Tax-inclusive line amount (`sale_items.line_total`).
-  double get lineTotal => unitPrice * qty;
+  /// The GST portion added to the base price.
+  double get gstAmount => (unitPrice * qty) * (gstRate / 100);
 
-  /// The GST portion already folded into [lineTotal] (receipt doc §5 row 7).
-  double get gstAmount => lineTotal - lineTotal / (1 + gstRate / 100);
+  /// Tax-inclusive line amount (`sale_items.line_total`).
+  double get lineTotal => (unitPrice * qty) + gstAmount;
 }
 
 /// Shop / GST registration header printed on every receipt (receipt doc §5

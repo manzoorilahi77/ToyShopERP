@@ -30,7 +30,10 @@ class _StaffShellState extends State<StaffShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      StaffDashboardScreen(onSell: () => setState(() => _index = 1)),
+      StaffDashboardScreen(
+        key: staffDashboardKey,
+        onSell: () => setState(() => _index = 1),
+      ),
       const NewSaleScreen(),
       const MySalesHistoryScreen(),
       const ProductSearchBrowseScreen(),
@@ -41,7 +44,12 @@ class _StaffShellState extends State<StaffShell> {
       bottomNavigationBar: AppBottomNav(
         items: _tabs,
         selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        onDestinationSelected: (i) {
+          setState(() => _index = i);
+          if (i == 0) {
+            staffDashboardKey.currentState?.reload();
+          }
+        },
       ),
     );
   }

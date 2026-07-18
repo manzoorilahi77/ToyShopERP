@@ -40,30 +40,21 @@ exports.getTenants = async (req, res) => {
     const tenantsMap = {};
 
     branches.forEach(branch => {
-      // Find the first user with 'Owner' or 'Admin' role, or just pick first user
-      const ownerUser = branch.users.find(u => u.role && (u.role.name === 'Owner' || u.role.name === 'Admin')) || branch.users[0];
+      // Find the user with 'Owner' or 'Super Admin' role
+      const ownerUser = branch.users.find(u => u.role && (u.role.name === 'Owner' || u.role.name === 'Super Admin'));
       const ownerName = ownerUser ? ownerUser.name : 'Unassigned';
       
       const revenue = branch.sales.reduce((sum, s) => sum + Number(s.totalAmount || 0), 0);
 
-      if (!tenantsMap[ownerName]) {
-        tenantsMap[ownerName] = {
-          id: `T${branch.id.toString().padStart(3, '0')}`,
-          name: ownerName === 'Unassigned' ? branch.name : `${ownerName}'s Shop`,
-          owner: ownerName,
-          plan: 'Pro', // Static for now
-          status: branch.isActive ? 'Active' : 'Inactive',
-          branches: 0,
-          rawRevenue: 0
-        };
-      }
-
-      tenantsMap[ownerName].branches += 1;
-      tenantsMap[ownerName].rawRevenue += revenue;
-      // If any branch is active, the tenant is active
-      if (branch.isActive) {
-        tenantsMap[ownerName].status = 'Active';
-      }
+      tenantsMap[branch.id] = {
+        id: `T${branch.id.toString().padStart(3, '0')}`,
+        name: branch.name,
+        owner: ownerName,
+        plan: 'Pro', // Static for now
+        status: branch.isActive ? 'Active' : 'Inactive',
+        branches: 1,
+        rawRevenue: revenue
+      };
     });
 
     const tenants = Object.values(tenantsMap).map(tenant => ({
@@ -127,54 +118,6 @@ exports.getGlobalStock = async (req, res) => {
     return successResponse(res, 200, 'Global stock retrieved', stock);
   } catch (error) {
     return errorResponse(res, 500, 'Error retrieving global stock', [error.message]);
-  }
-};
-
-exports.getSubscriptions = async (req, res) => {
-  try {
-    const data = [
-      {
-        id: 'starter',
-        name: 'Starter Plan',
-        price: '₹2,999',
-        period: '/month',
-        iconName: 'Building2',
-        color: 'text-blue-600',
-        bg: 'bg-blue-50',
-        borderColor: 'border-blue-200',
-        features: ['Up to 2 Branches', '5 Staff Members', 'Basic Reports', 'Email Support'],
-        activeTenants: 45
-      },
-      {
-        id: 'growth',
-        name: 'Growth Plan',
-        price: '₹5,999',
-        period: '/month',
-        iconName: 'Zap',
-        color: 'text-primary-600',
-        bg: 'bg-primary-50',
-        borderColor: 'border-primary-200 ring-2 ring-primary-500/20',
-        features: ['Up to 5 Branches', 'Unlimited Staff', 'Advanced Analytics', 'Priority 24/7 Support', 'Custom Domain'],
-        activeTenants: 82,
-        popular: true
-      },
-      {
-        id: 'enterprise',
-        name: 'Enterprise',
-        price: 'Custom',
-        period: '',
-        iconName: 'Server',
-        color: 'text-slate-700',
-        bg: 'bg-slate-100',
-        borderColor: 'border-slate-300',
-        features: ['Unlimited Branches', 'Dedicated Account Manager', 'Custom Integrations', 'SLA Guarantee', 'On-premise Option'],
-        activeTenants: 15
-      }
-    ];
-
-    return successResponse(res, 200, 'Subscriptions retrieved', data);
-  } catch (error) {
-    return errorResponse(res, 500, 'Error retrieving subscriptions', [error.message]);
   }
 };
 

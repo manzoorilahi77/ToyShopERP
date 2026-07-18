@@ -8,7 +8,6 @@ const superAdminNavItems = [
   { name: 'Tenants', path: '/super-admin/tenants', icon: Store },
   { name: 'Global Stock', path: '/super-admin/stock', icon: Package },
   { name: 'Global Staff', path: '/super-admin/staff', icon: Users },
-  { name: 'Subscriptions', path: '/super-admin/subscriptions', icon: CreditCard },
   { name: 'System Logs', path: '/super-admin/logs', icon: TerminalSquare },
   { name: 'Global Settings', path: '/super-admin/settings', icon: Settings },
 ];

@@ -87,15 +87,15 @@ exports.createSale = async (req, res) => {
       const itemTotal = priceToUse * item.quantity;
       const rate = Number(product.gstRate || 18);
       
-      const itemTaxableAmount = itemTotal / (1 + rate / 100);
-      const itemGstAmount = itemTotal - itemTaxableAmount;
+      const itemTaxableAmount = itemTotal;
+      const itemGstAmount = itemTotal * (rate / 100);
       const itemCgst = itemGstAmount / 2;
       const itemSgst = itemGstAmount / 2;
 
       totalTaxableAmount += itemTaxableAmount;
       totalCgst += itemCgst;
       totalSgst += itemSgst;
-      totalAmount += itemTotal;
+      totalAmount += (itemTotal + itemGstAmount);
 
       saleItemsData.push({
         productId: product.id,

@@ -2,8 +2,8 @@ const bcrypt = require('bcrypt');
 const { sequelize, Role, Branch, User, Category, Product } = require('../models');
 
 async function seed() {
-  await sequelize.sync({ force: true });
-  console.log('Database synced (force).');
+  await sequelize.sync({ alter: true });
+  console.log('Database synced (alter).');
 
   // Roles
   const roles = await Role.bulkCreate([
@@ -31,6 +31,13 @@ async function seed() {
   // Categories
   const cat1 = await Category.create({ name: 'Action Figures', icon: 'zap', color: 'bg-red-500' });
   const cat2 = await Category.create({ name: 'Board Games', icon: 'dice-5', color: 'bg-blue-500' });
+  const cat3 = await Category.create({ name: 'Plushies', icon: 'heart', color: 'bg-pink-500' });
+  const cat4 = await Category.create({ name: 'Puzzles', icon: 'puzzle', color: 'bg-green-500' });
+  const cat5 = await Category.create({ name: 'Vehicles', icon: 'car', color: 'bg-yellow-500' });
+  const cat6 = await Category.create({ name: 'Cars', icon: 'car-front', color: 'bg-orange-500' });
+  const cat7 = await Category.create({ name: 'Robot Toys', icon: 'bot', color: 'bg-indigo-500' });
+  const cat8 = await Category.create({ name: 'Educational', icon: 'book', color: 'bg-teal-500' });
+  const cat9 = await Category.create({ name: 'Building Blocks', icon: 'box', color: 'bg-purple-500' });
 
   // Products
   await Product.bulkCreate([

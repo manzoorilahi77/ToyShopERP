@@ -23,8 +23,6 @@ import SystemLogs from './pages/SuperAdmin/SystemLogs';
 import SuperAdminSettings from './pages/SuperAdmin/SuperAdminSettings';
 import GlobalStock from './pages/SuperAdmin/GlobalStock';
 import GlobalStaff from './pages/SuperAdmin/GlobalStaff';
-import Subscriptions from './pages/SuperAdmin/Subscriptions';
-
 import StaffShell from './layouts/StaffShell';
 import StaffDashboard from './pages/Staff/StaffDashboard';
 import NewSale from './pages/Staff/NewSale';
@@ -78,7 +76,6 @@ const App = () => {
               <Route path="tenants" element={<TenantsManagement />} />
               <Route path="stock" element={<GlobalStock />} />
               <Route path="staff" element={<GlobalStaff />} />
-              <Route path="subscriptions" element={<Subscriptions />} />
               <Route path="logs" element={<SystemLogs />} />
               <Route path="settings" element={<SuperAdminSettings />} />
             </Route>

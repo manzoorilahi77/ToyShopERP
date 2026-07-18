@@ -618,27 +618,64 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   Widget _mainContent() {
     if (_query.trim().isNotEmpty) return _searchResults();
-    final category = _selectedCategory;
-    if (category != null) return _categoryProducts(category);
     return _homeContent();
   }
 
   Widget _homeContent() {
     final catalog = _catalog!;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+    final p = context.palette;
+    
+    final products = _selectedCategory == null 
+        ? catalog.products 
+        : catalog.byCategory(_selectedCategory!.name);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (catalog.quickPicks.isNotEmpty) ...[
-          const SectionHeader(
-            title: 'Quick pick',
-            subtitle: 'Your hot items · 1-tap add',
-            padding: EdgeInsets.only(bottom: 8),
+        if (catalog.quickPicks.isNotEmpty && _selectedCategory == null) ...[
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: SectionHeader(
+              title: 'Quick pick',
+              subtitle: 'Your hot items · 1-tap add',
+            ),
           ),
-          _quickPickStrip(catalog.quickPicks),
-          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: _quickPickStrip(catalog.quickPicks),
+          ),
+          const SizedBox(height: 16),
         ],
-        const SectionHeader(title: 'Categories', padding: EdgeInsets.only(bottom: 8)),
-        _categoryGrid(catalog.categories),
+        SizedBox(
+          height: 40,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            itemCount: catalog.categories.length + 1,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (_, i) {
+              if (i == 0) {
+                 final sel = _selectedCategory == null;
+                 return ChoiceChip(
+                   label: const Text('All Products'),
+                   selected: sel,
+                   onSelected: (_) => setState(() => _selectedCategory = null),
+                 );
+              }
+              final c = catalog.categories[i - 1];
+              final sel = _selectedCategory == c;
+              return ChoiceChip(
+                label: Text(c.name),
+                selected: sel,
+                onSelected: (_) => setState(() => _selectedCategory = c),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: _productGrid(products),
+        ),
       ],
     );
   }
@@ -659,82 +696,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _categoryGrid(List<ProductCategory> categories) {
-    final cols = MediaQuery.sizeOf(context).width >= 600 ? 3 : 2;
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: categories.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: cols,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 2.6,
-      ),
-      itemBuilder: (_, i) => _categoryTile(categories[i]),
-    );
-  }
-
-  Widget _categoryTile(ProductCategory c) {
-    final p = context.palette;
-    final count = _catalog!.byCategory(c.name).length;
-    return AppCard(
-      onTap: () => setState(() => _selectedCategory = c),
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(color: c.color.withValues(alpha: 0.15), shape: BoxShape.circle),
-            child: Icon(c.icon, color: c.color, size: 20),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  c.name,
-                  style: AppType.label.copyWith(color: p.ink, fontWeight: FontWeight.w700),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text('$count toys', style: AppType.caption.copyWith(color: p.inkMuted)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _categoryProducts(ProductCategory category) {
-    final p = context.palette;
-    final products = _catalog!.byCategory(category.name);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(4, 0, 16, 0),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: () => setState(() => _selectedCategory = null),
-                icon: const Icon(Icons.arrow_back_rounded),
-                tooltip: 'Back to categories',
-              ),
-              Expanded(child: Text(category.name, style: AppType.title.copyWith(color: p.ink))),
-              Text('${products.length} toys', style: AppType.caption.copyWith(color: p.inkMuted)),
-            ],
-          ),
-        ),
-        Expanded(child: _productGrid(products)),
-      ],
     );
   }
 

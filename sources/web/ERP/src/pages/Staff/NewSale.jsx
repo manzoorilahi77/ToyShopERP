@@ -104,13 +104,13 @@ export default function NewSale() {
     setCart(prev => prev.filter(item => item.product.id !== productId));
   };
 
-  const total = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
   const tax = cart.reduce((sum, item) => {
     const rate = Number(item.product.gstRate || 18); // fallback to 18 if not set
     const itemTotal = item.unitPrice * item.quantity;
-    return sum + (itemTotal - (itemTotal / (1 + rate / 100)));
+    return sum + (itemTotal * (rate / 100));
   }, 0);
-  const subtotal = total - tax;
+  const total = subtotal + tax;
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;

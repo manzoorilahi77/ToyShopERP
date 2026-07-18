@@ -6,17 +6,18 @@ import 'dashboard_data.dart';
 
 /// Staff Home / Dashboard (gamified) — the motivating landing screen.
 /// Doc: docs/mobile/staff/dashboard/dashboard-home.md (Requirement 5).
+final GlobalKey<StaffDashboardScreenState> staffDashboardKey = GlobalKey<StaffDashboardScreenState>();
+
 class StaffDashboardScreen extends StatefulWidget {
   const StaffDashboardScreen({super.key, this.onSell});
 
-  /// Switches the shell to the "Sell" tab (New Sale).
   final VoidCallback? onSell;
 
   @override
-  State<StaffDashboardScreen> createState() => _StaffDashboardScreenState();
+  State<StaffDashboardScreen> createState() => StaffDashboardScreenState();
 }
 
-class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
+class StaffDashboardScreenState extends State<StaffDashboardScreen> {
   final _repo = const StaffDashboardRepository();
   StaffDashboardData? _data;
   DashPeriod _period = DashPeriod.day;
@@ -24,21 +25,31 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    reload();
+  }
+
+  void reload() {
     _repo.load().then((d) {
       if (mounted) setState(() => _data = d);
     });
   }
 
-  void _openSale({Product? preAdd}) {
+  Future<void> _openSale({Product? preAdd}) async {
     if (preAdd != null) {
-      Navigator.of(context).push(
+      await Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => NewSaleScreen(preAdd: preAdd)),
       );
     } else if (widget.onSell != null) {
       widget.onSell!();
+      return;
     } else {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NewSaleScreen()));
+      await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NewSaleScreen()));
     }
+    
+    // Refresh data after returning from a sale
+    _repo.load().then((d) {
+      if (mounted) setState(() => _data = d);
+    });
   }
 
   @override

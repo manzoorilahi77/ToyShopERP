@@ -37,7 +37,7 @@ class CartLine {
   double get unitPrice => priceOverride ?? product.price;
   bool get isPriceOverridden => priceOverride != null;
 
-  double get lineTotal => unitPrice * qty;
+  double get lineTotal => (unitPrice * qty) + ((unitPrice * qty) * (product.gstRate / 100));
 
   /// Snapshots price/GST now — later catalog edits never touch this line
   /// once it's on a confirmed sale (new-sale doc rule 3).
