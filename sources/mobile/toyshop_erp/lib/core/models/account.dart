@@ -62,6 +62,8 @@ class Account {
     UserRole parsedRole = UserRole.staff;
     if (json['role'] == 'owner') parsedRole = UserRole.owner;
     if (json['role'] == 'accountant') parsedRole = UserRole.accountant;
+    if (json['role'] == 'super_admin') parsedRole = UserRole.superAdmin;
+    if (json['role'] == 'manager') parsedRole = UserRole.manager;
 
     return Account(
       id: json['id'].toString(),

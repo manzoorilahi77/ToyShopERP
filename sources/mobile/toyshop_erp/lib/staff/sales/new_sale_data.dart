@@ -8,9 +8,13 @@
 // Drift catalog cache with zero connectivity. [_catalog] below stands in for
 // that cache.
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../../core/core.dart';
+import '../../core/api_config.dart';
+import '../../core/utils/storage_service.dart';
 import 'receipt_data.dart';
 
 /// One priced row building up in the cart (new-sale doc §5 row 11). Mutable
@@ -97,22 +101,105 @@ class NewSaleRepository {
   const NewSaleRepository();
 
   Future<NewSaleCatalog> loadCatalog() async {
-    await Future.delayed(const Duration(milliseconds: 250));
-    return _catalog;
+    try {
+      final token = await StorageService.getAccessToken();
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+
+      final catRes = await http.get(Uri.parse(ApiConfig.categories), headers: headers);
+      final categories = <ProductCategory>[];
+      if (catRes.statusCode == 200) {
+        final data = jsonDecode(catRes.body);
+        if (data['success'] == true && data['data'] != null) {
+          final list = data['data'] as List;
+          for (final c in list) {
+            categories.add(ProductCategory.fromJson(c));
+          }
+        }
+      }
+
+      final prodRes = await http.get(Uri.parse(ApiConfig.products), headers: headers);
+      final products = <Product>[];
+      final quickPicks = <Product>[];
+      if (prodRes.statusCode == 200) {
+        final data = jsonDecode(prodRes.body);
+        if (data['success'] == true && data['data'] != null) {
+          final list = data['data'] as List;
+          for (final p in list) {
+            final prod = Product.fromJson(p);
+            products.add(prod);
+            if (prod.isFavorite) {
+              quickPicks.add(prod);
+            }
+          }
+        }
+      }
+
+      if (categories.isEmpty && products.isEmpty) {
+        return _catalog;
+      }
+
+      return NewSaleCatalog(
+        categories: categories.isEmpty ? _categories : categories,
+        products: products,
+        quickPicks: quickPicks,
+      );
+    } catch (e) {
+      debugPrint('Error loading catalog: $e');
+      return _catalog;
+    }
   }
 
-  /// Writes the sale **locally-first** (new-sale doc §10 steps 1–3: insert
-  /// `sales` + `sale_items` + a local stock movement, decrement cached
-  /// on_hand, show the receipt) and hands back the [ReceiptData] to show
-  /// immediately — this never awaits the network (rule 1: never block the
-  /// sale). The sale starts `pending`; the receipt screen simulates the
-  /// fire-and-forget outbox push resolving to `synced` (receipt doc §10).
   Future<ReceiptData> confirmSale({
     required List<CartLine> lines,
     required PaymentMode paymentMode,
     required String staffName,
     required String branchName,
   }) async {
+    try {
+      final token = await StorageService.getAccessToken();
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+
+      final body = {
+        'branchId': 1,
+        'paymentMethod': paymentMode.name,
+        'items': lines.map((l) => {
+          'productId': l.product.id,
+          'quantity': l.qty,
+          'unitPrice': l.unitPrice,
+        }).toList(),
+      };
+
+      final res = await http.post(
+        Uri.parse(ApiConfig.sales),
+        headers: headers,
+        body: jsonEncode(body),
+      );
+
+      if (res.statusCode == 201) {
+        final data = jsonDecode(res.body);
+        final sale = data['data']['sale'];
+        
+        return ReceiptData(
+          clientUuid: sale['id'].toString(),
+          invoiceNo: sale['invoiceNumber'],
+          soldAt: DateTime.parse(sale['createdAt']).toLocal(),
+          staffName: staffName,
+          branchName: branchName,
+          items: [for (final l in lines) l.toReceiptLine()],
+          paymentMode: paymentMode,
+          syncStatus: SyncState.synced,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error confirming sale: $e');
+    }
+
     return ReceiptData(
       clientUuid: _newClientUuid(),
       soldAt: DateTime.now(),

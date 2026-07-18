@@ -84,13 +84,13 @@ exports.createSale = async (req, res) => {
       }
 
       const priceToUse = item.unitPrice !== undefined ? Number(item.unitPrice) : product.price;
-      const itemTaxableAmount = priceToUse * item.quantity;
+      const itemTotal = priceToUse * item.quantity;
       const rate = Number(product.gstRate || 18);
-      const itemGstAmount = itemTaxableAmount * (rate / 100);
+      
+      const itemTaxableAmount = itemTotal / (1 + rate / 100);
+      const itemGstAmount = itemTotal - itemTaxableAmount;
       const itemCgst = itemGstAmount / 2;
       const itemSgst = itemGstAmount / 2;
-      
-      const itemTotal = itemTaxableAmount + itemGstAmount;
 
       totalTaxableAmount += itemTaxableAmount;
       totalCgst += itemCgst;

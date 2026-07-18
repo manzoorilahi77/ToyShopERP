@@ -7,9 +7,13 @@
 //   POST/DELETE /staff/{id}/favorites (proposed) → pin/unpin/reorder, queued in outbox offline
 //   POST /auth/logout               → revoke refresh token, clear local session
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../../core/core.dart';
+import '../../core/api_config.dart';
+import '../../core/utils/storage_service.dart';
 
 /// Lifetime + this-month performance snapshot (denormalized caches per §6.2).
 class ProfileStats {
@@ -142,7 +146,84 @@ class StaffProfileRepository {
   const StaffProfileRepository();
 
   Future<StaffProfileData> load() async {
-    return _demo;
+    try {
+      final token = await StorageService.getAccessToken();
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      
+      var lifetimeUnits = 0;
+      var lifetimeSales = 0.0;
+      var monthPoints = 0;
+      
+      final dashRes = await http.get(Uri.parse(ApiConfig.dashboardStaff), headers: headers);
+      if (dashRes.statusCode == 200) {
+        final data = jsonDecode(dashRes.body);
+        if (data['success'] == true && data['data'] != null) {
+          final stats = data['data'];
+          lifetimeUnits = stats['lifetimeUnits'] ?? 0;
+          lifetimeSales = double.tryParse((stats['lifetimeRevenue'] ?? '0').toString()) ?? 0.0;
+          monthPoints = stats['points'] ?? 0;
+        }
+      }
+      
+      var rank = 2; // Default fallback
+      var totalStaff = 6;
+      final lbRes = await http.get(Uri.parse(ApiConfig.usersLeaderboard), headers: headers);
+      if (lbRes.statusCode == 200) {
+        final data = jsonDecode(lbRes.body);
+        if (data['success'] == true && data['data'] != null) {
+          final list = data['data'] as List;
+          totalStaff = list.length > 0 ? list.length : 6;
+          final idx = list.indexWhere((u) => u['points'] == monthPoints);
+          if (idx >= 0) rank = idx + 1;
+        }
+      }
+
+      // Fetch products for favorites catalog
+      final prodRes = await http.get(Uri.parse(ApiConfig.products), headers: headers);
+      final favoriteCatalog = <Product>[];
+      final favorites = <Product>[];
+      if (prodRes.statusCode == 200) {
+        final data = jsonDecode(prodRes.body);
+        if (data['success'] == true && data['data'] != null) {
+          final list = data['data'] as List;
+          for (final p in list) {
+            final prod = Product.fromJson(p);
+            favoriteCatalog.add(prod);
+            if (prod.isFavorite) {
+              favorites.add(prod);
+            }
+          }
+        }
+      }
+
+      return StaffProfileData(
+        stats: ProfileStats(
+          lifetimeUnits: lifetimeUnits,
+          lifetimeSales: lifetimeSales,
+          monthPoints: monthPoints,
+          rank: rank,
+          totalStaff: totalStaff,
+          asOf: DateTime.now(),
+        ),
+        badges: _demo.badges,
+        favorites: favorites.isEmpty ? _demo.favorites : favorites,
+        favoriteCatalog: favoriteCatalog.isEmpty ? _demo.favoriteCatalog : favoriteCatalog,
+        tier: IncentiveTierProgress(
+          tierNames: _demo.tier.tierNames,
+          tierThresholds: _demo.tier.tierThresholds,
+          tierRewards: _demo.tier.tierRewards,
+          currentPoints: monthPoints,
+          periodLabel: _demo.tier.periodLabel,
+        ),
+        preferences: _demo.preferences,
+      );
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
+      return _demo;
+    }
   }
 }
 

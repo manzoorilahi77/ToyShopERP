@@ -4,7 +4,13 @@
 // runs client-side over [_demo] exactly the way it would offline against the
 // Drift `sales` cache (doc §10).
 
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import '../../core/core.dart';
+import '../../core/api_config.dart';
+import '../../core/utils/storage_service.dart';
 import 'receipt_data.dart';
 
 /// Date-range chip options (my-sales-history doc §5 row 1).
@@ -43,16 +49,74 @@ class SalesSummary {
 class MySalesHistoryRepository {
   const MySalesHistoryRepository();
 
-  /// `GET /sales?staff_id={me}&from=&to=` (doc §9). [query] is an extra
-  /// client-side convenience (invoice ref / item name) layered on top of the
-  /// doc's date-range filter.
   Future<List<ReceiptData>> load({
     DateRangeFilter filter = DateRangeFilter.today,
     DateTime? from,
     DateTime? to,
     String query = '',
   }) async {
-    await Future.delayed(const Duration(milliseconds: 250));
+    try {
+      final token = await StorageService.getAccessToken();
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      
+      final res = await http.get(Uri.parse(ApiConfig.salesMySales), headers: headers);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['data'] != null) {
+          final list = data['data'] as List;
+          var rows = <ReceiptData>[];
+          for (final s in list) {
+             final items = (s['items'] as List?)?.map((i) {
+               final prod = i['product'] ?? {};
+               return ReceiptLine(
+                 productId: i['productId']?.toString() ?? '',
+                 name: prod['name'] ?? 'Unknown',
+                 qty: i['quantity'] ?? 0,
+                 unitPrice: double.tryParse(i['unitPrice']?.toString() ?? '0') ?? 0,
+                 gstRate: int.tryParse(i['gstPercent']?.toString() ?? '18') ?? 18,
+               );
+             }).toList() ?? [];
+
+             var pm = PaymentMode.cash;
+             if (s['paymentMethod'] == 'card') pm = PaymentMode.card;
+             else if (s['paymentMethod'] == 'upi') pm = PaymentMode.upi;
+
+             rows.add(ReceiptData(
+               clientUuid: s['id'].toString(),
+               invoiceNo: s['invoiceNumber'],
+               soldAt: DateTime.parse(s['createdAt']).toLocal(),
+               staffName: s['user']?['name'] ?? 'You',
+               branchName: 'Main Store', // Fetch from branch relation if available
+               items: items,
+               paymentMode: pm,
+               syncStatus: SyncState.synced,
+             ));
+          }
+
+          final range = _rangeFor(filter, from: from, to: to);
+          rows = rows.where((r) {
+            return !r.soldAt.isBefore(range.$1) && r.soldAt.isBefore(range.$2);
+          }).toList();
+          
+          final q = query.trim().toLowerCase();
+          if (q.isNotEmpty) {
+            rows = rows.where((r) {
+              return r.displayRef.toLowerCase().contains(q) ||
+                  r.items.any((l) => l.name.toLowerCase().contains(q));
+            }).toList();
+          }
+          rows.sort((a, b) => b.soldAt.compareTo(a.soldAt));
+          return rows;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading sales history: $e');
+    }
+
+    // Fallback to demo data
     final range = _rangeFor(filter, from: from, to: to);
     var rows = _demo.where((r) {
       return !r.soldAt.isBefore(range.$1) && r.soldAt.isBefore(range.$2);
@@ -85,7 +149,8 @@ class MySalesHistoryRepository {
   }
 
   (DateTime, DateTime) _rangeFor(DateRangeFilter f, {DateTime? from, DateTime? to}) {
-    final startOfToday = DateTime(_demoNow.year, _demoNow.month, _demoNow.day);
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day);
     final startOfTomorrow = startOfToday.add(const Duration(days: 1));
     switch (f) {
       case DateRangeFilter.today:
@@ -96,7 +161,7 @@ class MySalesHistoryRepository {
         final weekStart = startOfToday.subtract(Duration(days: startOfToday.weekday - 1));
         return (weekStart, startOfTomorrow);
       case DateRangeFilter.thisMonth:
-        final monthStart = DateTime(_demoNow.year, _demoNow.month, 1);
+        final monthStart = DateTime(now.year, now.month, 1);
         return (monthStart, startOfTomorrow);
       case DateRangeFilter.custom:
         final start = from == null ? startOfToday : DateTime(from.year, from.month, from.day);
@@ -106,11 +171,6 @@ class MySalesHistoryRepository {
     }
   }
 }
-
-/// Fixed "now" for the whole prototype (matches dashboard_data.dart's `asOf`
-/// and Fmt.ago's reference clock) so "Today" always has rich demo data
-/// regardless of the device's real date.
-final DateTime _demoNow = DateTime(2026, 7, 3, 19, 45);
 
 ReceiptLine _li(String id, String name, int qty, double price, {int gst = 18}) =>
     ReceiptLine(productId: id, name: name, qty: qty, unitPrice: price, gstRate: gst);

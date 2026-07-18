@@ -8,9 +8,13 @@
 // Drift catalog cache. [_products] below stands in for that cache; filtering
 // happens client-side via [filterProducts] exactly the way it would offline.
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../../core/core.dart';
+import '../../core/api_config.dart';
+import '../../core/utils/storage_service.dart';
 
 /// A named color swatch for the R3 color filter. Carries a **label** so
 /// meaning is never color-only (design-system.md §8).
@@ -25,8 +29,6 @@ class ColorTagOption {
 class ProductSearchBrowseRepository {
   const ProductSearchBrowseRepository();
 
-  /// `GET /products?category_id=&q=&color=&shelf=` (doc §9). Offline: served
-  /// from the Drift catalog cache — mirrored here by [_products].
   Future<List<Product>> search({
     String? query,
     String? categoryId,
@@ -34,7 +36,39 @@ class ProductSearchBrowseRepository {
     String? shelf,
     bool favoritesOnly = false,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    try {
+      final token = await StorageService.getAccessToken();
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      final res = await http.get(Uri.parse(ApiConfig.products), headers: headers);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['data'] != null) {
+          final list = data['data'] as List;
+          final products = list.map((p) => Product.fromJson(p)).toList();
+          
+          final cats = await categories();
+          final categoryName = categoryId == null
+              ? null
+              : cats.firstWhere((c) => c.id == categoryId, orElse: () => cats.first).name;
+
+          return filterProducts(
+            products,
+            query: query,
+            categoryName: categoryName,
+            color: color,
+            shelf: shelf,
+            favoritesOnly: favoritesOnly,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error searching products: $e');
+    }
+    
+    // Fallback to demo data
     final categoryName = categoryId == null
         ? null
         : _categories
@@ -50,39 +84,90 @@ class ProductSearchBrowseRepository {
     );
   }
 
-  /// Cached `categories`, `is_active=1` only (doc §5 row 4).
   Future<List<ProductCategory>> categories() async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    try {
+      final token = await StorageService.getAccessToken();
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      final res = await http.get(Uri.parse(ApiConfig.categories), headers: headers);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['data'] != null) {
+          final list = data['data'] as List;
+          return list.map((c) => ProductCategory.fromJson(c)).toList();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching categories: $e');
+    }
     return _categories;
   }
 
-  /// `GET /products/by-qr/{internal_qr_code}` (doc §9) — resolves a
-  /// scanned/typed sticker straight to its product (near-barcode speed, R3
-  /// rule 3); `null` when the code isn't recognised.
   Future<Product?> resolveQr(String code) async {
-    await Future.delayed(const Duration(milliseconds: 350));
     final norm = code.trim().toLowerCase();
     if (norm.isEmpty) return null;
+    
+    try {
+      final token = await StorageService.getAccessToken();
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      final res = await http.get(Uri.parse(ApiConfig.products), headers: headers);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['data'] != null) {
+          final list = data['data'] as List;
+          for (final p in list) {
+            final prod = Product.fromJson(p);
+            if (prod.qrCode != null && prod.qrCode!.toLowerCase() == norm) return prod;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error resolving QR: $e');
+    }
+
     for (final p in _products) {
       if (p.qrCode != null && p.qrCode!.toLowerCase() == norm) return p;
     }
     return null;
   }
 
-  /// `POST|DELETE /staff/{id}/favorites` (proposed, doc §10) — the only write
-  /// on this screen; queued to `sync_outbox` when offline.
   Future<Product> toggleFavorite(String productId) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    try {
+      final token = await StorageService.getAccessToken();
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      final res = await http.patch(
+        Uri.parse('${ApiConfig.products}/$productId/favorite'), 
+        headers: headers
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['data'] != null) {
+          return Product.fromJson(data['data']);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error toggling favorite: $e');
+    }
+
     final i = _products.indexWhere((p) => p.id == productId);
-    final updated = _products[i].copyWith(isFavorite: !_products[i].isFavorite);
-    _products[i] = updated;
-    return updated;
+    if (i >= 0) {
+      final updated = _products[i].copyWith(isFavorite: !_products[i].isFavorite);
+      _products[i] = updated;
+      return updated;
+    }
+    throw Exception('Product not found');
   }
 
-  /// Distinct `products.color_tag` values (doc §5 row 5).
   List<ColorTagOption> get colorOptions => _colorOptions;
 
-  /// Distinct `products.shelf_location` values (doc §5 row 6).
   List<String> get shelfOptions => _shelfOptions;
 }
 

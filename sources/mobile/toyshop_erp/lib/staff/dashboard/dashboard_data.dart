@@ -1,6 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../../core/core.dart';
+import '../../core/api_config.dart';
+import '../../core/utils/storage_service.dart';
 
 /// PROTOTYPE DUMMY DATA — Staff Home / Dashboard.
 ///
@@ -84,7 +88,87 @@ class StaffDashboardRepository {
   const StaffDashboardRepository();
 
   Future<StaffDashboardData> load() async {
-    return _demo;
+    try {
+      final token = await StorageService.getAccessToken();
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+
+      // Fetch dashboard stats
+      final dashRes = await http.get(Uri.parse(ApiConfig.dashboardStaff), headers: headers);
+      var dayUnits = 0;
+      var dayRev = 0.0;
+      var lifetimeUnits = 0;
+      var currentPoints = 0;
+      if (dashRes.statusCode == 200) {
+        final data = jsonDecode(dashRes.body);
+        if (data['success'] == true && data['data'] != null) {
+          final stats = data['data'];
+          dayUnits = stats['salesToday'] ?? 0;
+          dayRev = double.tryParse((stats['revenueToday'] ?? '0').toString()) ?? 0.0;
+          lifetimeUnits = stats['lifetimeUnits'] ?? 0;
+          currentPoints = stats['points'] ?? 0;
+        }
+      }
+
+      // Fetch leaderboard
+      final lbRes = await http.get(Uri.parse(ApiConfig.usersLeaderboard), headers: headers);
+      final leaderboard = <LeaderboardEntry>[];
+      if (lbRes.statusCode == 200) {
+        final data = jsonDecode(lbRes.body);
+        if (data['success'] == true && data['data'] != null) {
+          final list = data['data'] as List;
+          for (var i = 0; i < list.length; i++) {
+            final u = list[i];
+            final name = u['name'] ?? 'Unknown';
+            leaderboard.add(LeaderboardEntry(
+              rank: i + 1,
+              name: name,
+              points: u['points'] ?? 0,
+              units: 0,
+              movement: 0,
+              isMe: false, // We'll rely on name matching for demo or skip
+              color: i == 0 ? const Color(0xFFDB2777) : const Color(0xFF2563EB),
+              initials: name.isNotEmpty ? name.substring(0, 2).toUpperCase() : 'NA',
+            ));
+          }
+        }
+      }
+
+      // Fetch quick picks
+      final prodRes = await http.get(Uri.parse(ApiConfig.products), headers: headers);
+      final quickPicks = <Product>[];
+      if (prodRes.statusCode == 200) {
+        final data = jsonDecode(prodRes.body);
+        if (data['success'] == true && data['data'] != null) {
+          final list = data['data'] as List;
+          for (final p in list) {
+            if (p['isFavorite'] == true) {
+              quickPicks.add(Product.fromJson(p));
+            }
+          }
+        }
+      }
+
+      return StaffDashboardData(
+        asOf: DateTime.now(),
+        stats: {
+          DashPeriod.day: PeriodStat(units: dayUnits, revenue: dayRev, trendPct: 0),
+          DashPeriod.week: PeriodStat(units: _demo.stats[DashPeriod.week]!.units, revenue: _demo.stats[DashPeriod.week]!.revenue, trendPct: _demo.stats[DashPeriod.week]!.trendPct),
+          DashPeriod.month: PeriodStat(units: lifetimeUnits, revenue: _demo.stats[DashPeriod.month]!.revenue, trendPct: _demo.stats[DashPeriod.month]!.trendPct),
+        },
+        leaderboard: leaderboard.isEmpty ? _demo.leaderboard : leaderboard,
+        incentive: IncentiveProgress(
+          current: lifetimeUnits, target: 500, unitLabel: 'units', rewardLabel: '₹1,000 bonus',
+        ),
+        badges: _demo.badges,
+        quickPicks: quickPicks.isEmpty ? _demo.quickPicks : quickPicks,
+      );
+    } catch (e) {
+      debugPrint('Error loading staff dashboard: $e');
+      return _demo;
+    }
   }
 }
 

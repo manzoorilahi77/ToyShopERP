@@ -64,6 +64,45 @@ class Product {
       image: image ?? this.image,
     );
   }
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    Color parseColor(String? hex) {
+      if (hex == null || hex.isEmpty) return const Color(0xFF2563EB); // Default blue
+      final buffer = StringBuffer();
+      if (hex.length == 6 || hex.length == 7) buffer.write('ff');
+      buffer.write(hex.replaceFirst('#', ''));
+      try {
+        return Color(int.parse(buffer.toString(), radix: 16));
+      } catch (e) {
+        return const Color(0xFF2563EB);
+      }
+    }
+
+    final stockQty = json['stock'] as int? ?? 0;
+    StockState stockState = StockState.healthy;
+    if (stockQty == 0) {
+      stockState = StockState.out;
+    } else if (stockQty < 10) {
+      stockState = StockState.low;
+    }
+
+    return Product(
+      id: (json['id'] ?? '').toString(),
+      name: json['name'] ?? 'Unknown',
+      category: json['category']?['name'] ?? 'Uncategorized',
+      price: double.tryParse((json['price'] ?? '0').toString()) ?? 0,
+      mrp: double.tryParse((json['mrp'] ?? '0').toString()),
+      colorTag: parseColor(json['color']),
+      stock: stockState,
+      stockQty: stockQty,
+      supplier: json['supplier'],
+      shelf: json['shelfLocation'],
+      qrCode: json['barcode'],
+      isFavorite: json['isFavorite'] == true || json['isFavorite'] == 1,
+      gstRate: int.tryParse((json['gstRate'] ?? '18').toString()) ?? 18,
+      image: json['image'],
+    );
+  }
 }
 
 /// A product category tile (design-system.md §6 `CategoryGrid`).
@@ -82,4 +121,13 @@ class ProductCategory {
   final Color color;
   final IconData icon;
   final int count;
+
+  factory ProductCategory.fromJson(Map<String, dynamic> json) {
+    return ProductCategory(
+      id: (json['id'] ?? '').toString(),
+      name: json['name'] ?? 'Unknown',
+      color: const Color(0xFF16A34A), // Default green, or parse if backend sends color
+      icon: Icons.category_rounded,
+    );
+  }
 }
