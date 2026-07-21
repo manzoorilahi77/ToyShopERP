@@ -589,7 +589,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       style: AppType.body.copyWith(color: p.ink),
                       decoration: InputDecoration(
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
                         isCollapsed: true,
+                        contentPadding: EdgeInsets.zero,
                         hintText: 'Search toys…',
                         hintStyle: AppType.body.copyWith(color: p.inkMuted),
                       ),

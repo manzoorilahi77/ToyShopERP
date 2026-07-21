@@ -245,7 +245,10 @@ class _MySalesHistoryScreenState extends State<MySalesHistoryScreen> {
                 style: AppType.body.copyWith(color: p.ink),
                 decoration: InputDecoration(
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
                   isCollapsed: true,
+                  contentPadding: EdgeInsets.zero,
                   hintText: 'Search invoice or item…',
                   hintStyle: AppType.body.copyWith(color: p.inkMuted),
                 ),
