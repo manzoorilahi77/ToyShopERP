@@ -22,10 +22,10 @@ import '../../core/utils/storage_service.dart';
 String? _formatImageUrl(String? url) {
   if (url == null || url.isEmpty) return null;
   if (url.startsWith('http://localhost:5000')) {
-    return url.replaceFirst('http://localhost:5000', 'http://127.0.0.1:5000');
+    return url.replaceFirst('http://localhost:5000', 'https://toys.aspirasys.in');
   }
   if (url.startsWith('/')) {
-    return 'http://127.0.0.1:5000$url';
+    return 'https://toys.aspirasys.in$url';
   }
   return url;
 }

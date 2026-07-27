@@ -24,9 +24,32 @@ api.interceptors.request.use(
   }
 );
 
+// Function to replace localhost URLs with the current API origin
+const fixUrls = (obj) => {
+  if (typeof obj === 'string') {
+    const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    const baseUrl = isProd ? window.location.origin : 'http://localhost:6008';
+    return obj.replace(/http:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2)(:\d+)?/g, baseUrl);
+  } else if (Array.isArray(obj)) {
+    return obj.map(fixUrls);
+  } else if (obj !== null && typeof obj === 'object') {
+    const newObj = {};
+    for (const key in obj) {
+      newObj[key] = fixUrls(obj[key]);
+    }
+    return newObj;
+  }
+  return obj;
+};
+
 // Response interceptor for API calls
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data) {
+      response.data = fixUrls(response.data);
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
     // Prevent infinite loops
